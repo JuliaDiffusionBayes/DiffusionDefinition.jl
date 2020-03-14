@@ -1,5 +1,7 @@
 module DiffusionDefinition
 
-greet() = print("Hello World!")
+include("diffusion_process.jl")
+
+export @diffusion_process
 
 end # module

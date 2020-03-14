@@ -1,3 +1,6 @@
+using Revise
+using DiffusionDefinition, StaticArrays
+
 @diffusion_process Lorenz begin
     :dimensions
     #---------

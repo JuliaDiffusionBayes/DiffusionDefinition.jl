@@ -1,4 +1,4 @@
-using MacroTools, StaticArrays, Revise
+using MacroTools, StaticArrays
 import Base: lowercase
 import Base: eltype
 
@@ -210,7 +210,7 @@ function parse_process(name , ex::Expr, ::Any)
     for fn in p.fns
         eval(fn)
     end
-    nothing
+    Meta.parse("import DiffusionDefinition.$name")
 end
 
 function parse_lines!(ex::Expr, p, condition)
