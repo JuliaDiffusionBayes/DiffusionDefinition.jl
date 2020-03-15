@@ -119,3 +119,22 @@ x_sym = m.args[1].args[3]
 m.args[2].head
 m.args[2].args[1].args[3].args[1] = :u
 m
+
+
+
+include("state_space_restrictions.jl")
+lb = LowerBoundedStateSpace((1,3), (-2.0, 3.0))
+ub = UpperBoundedStateSpace((1,3), (4.0, 10.0))
+b = BoundedStateSpace(lb, ub)
+nb = UnboundedStateSpace()
+
+a = [-1,0,1.0,4.0]
+v = [-1,0,1.0,20.0]
+@time bound_satisfied(nb, a)
+@time bound_satisfied(lb, a)
+@time bound_satisfied(ub, a)
+@time bound_satisfied(b, a)
+@time bound_satisfied(nb, v)
+@time bound_satisfied(lb, v)
+@time bound_satisfied(ub, v)
+@time bound_satisfied(b, v)
