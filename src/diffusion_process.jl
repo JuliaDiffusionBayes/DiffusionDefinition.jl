@@ -13,7 +13,7 @@ _CONJUGATE = [:conjugate]
 _EXTRA = [:additional, :extra]
 _WIENER = [:wiener, :noise, :gaus, :gaussian]
 _PROCESS = [:proc, :process, :state, :statespace]
-_DOMAIN = [:domain, :domains, :statespace, :state]
+_STATESPACE = [:statespace, :state, :domain, :domains]
 _CONSTDIFF = [
     :constdiff,
     :constvola,
@@ -95,9 +95,11 @@ function parse_process(name , ex::Expr, ::Any)
     abstract_type = prepare_abstract_type(
         p.extras[_LINEAR[1]] ? :LinearDiffusion : :DiffusionProcess,
         p.dims,
-        p.extras[_ELTYPE[1]]
+        p.extras[_ELTYPE[1]],
+        p.extras[_STATESPACE[1]],
     )
     struct_def = createstruct(abstract_type, name, p.parameters)
+    add_constdiff_function!(p.fns, p)
     eval(struct_def)
     for fn in p.fns
         eval(fn)
@@ -282,6 +284,10 @@ function parse_line!(::Val{:conjugate}, line, p)
             add_nonhypo_function!(fns, line, p)
         end
         append!(p.fns, fns)
+    elseif _symbol_in(line.args[1], _NUMNONHYPO)
+        num = line.args[2]
+        @assert typeof(num) <: Integer
+        p.extras[_NUMNONHYPO[1]] = num
     end
 end
 
@@ -369,12 +375,29 @@ Parse a line that defines additional information about a diffusion process.
 """
 function parse_line!(::Val{:additional}, line, p)
     name = line.args[1]
-    _symbol_in(name, _DOMAIN) && (name = _DOMAIN[1])
+    _symbol_in(name, _STATESPACE) && (name = _STATESPACE[1])
     _symbol_in(name, _CONSTDIFF) && (name = _CONSTDIFF[1])
     _symbol_in(name, _LINEAR) && (name = _LINEAR[1])
     _symbol_in(name, _ELTYPE) && (name = _ELTYPE[1])
 
     p.extras[name] = line.args[2]
+end
+
+"""
+    add_constdiff_function!(fns, p)
+
+Add a definition of a function `consdiff` that indicates if the diffusion
+coefficient is constant
+"""
+function add_constdiff_function!(fns, p)
+    fn_def = Expr(:call,
+        :constdiff,
+        Expr(:(::),
+            :P,
+            p.name
+        )
+    )
+    push!(fns, Expr(:(=), fn_def, p.extras[_CONSTDIFF[1]]))
 end
 
 #------------------------------------------------------------------------------#
@@ -432,10 +455,15 @@ of each coordinate is set to `Float64`.
 """
 function fill_unspecified_with_defaults(::Val{:additional}, p)
     defaults = [
-        (_DOMAIN[1], UnboundedStateSpace()),
+        (_STATESPACE[1], UnboundedStateSpace()),
         (_CONSTDIFF[1], false),
         (_LINEAR[1], false),
-        (_ELTYPE[1], Float64)
+        (_ELTYPE[1], Float64),
+        (_NUMNONHYPO[1], (
+            haskey(p.extras, _STATESPACE[1]) ?
+            p.extras[_STATESPACE[1]] :
+            1
+        )),
     ]
     for (key, default_val) in defaults
         !haskey(p.extras, key) && (p.extras[key] = default_val)
@@ -443,15 +471,15 @@ function fill_unspecified_with_defaults(::Val{:additional}, p)
 end
 
 """
-    prepare_abstract_type(stem, dims, data_type)
+    prepare_abstract_type(stem, dims, data_type, state_restr)
 
 Create a string defining a parent, abstract type from its `stem`, the dimensions
-`dims` of the process and the driving Brownian motion and the datatype
-`data_type` of each coordinate.
+`dims` of the process and the driving Brownian motion, the datatype `data_type`
+of each coordinate and the restrictions on the state space `state_restr`.
 """
-function prepare_abstract_type(stem, dims, data_type)
+function prepare_abstract_type(stem, dims, data_type, state_restr)
     wiener_dim, proc_dim = dims[_WIENER[1]], dims[_PROCESS[1]]
-    "$stem{$data_type,$proc_dim,$wiener_dim}"
+    "$stem{$data_type,$proc_dim,$wiener_dim,$state_restr}"
 end
 
 """

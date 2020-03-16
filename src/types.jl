@@ -9,35 +9,43 @@ import Base: lowercase, eltype
 
 Types inheriting from `DiffusionProcess` define Ito diffusions. `T` denotes the
 datatype of each coordinate, `DP` the dimension of the stochastic process,
-`DW` the dimension of the Wiener process.
+`DW` the dimension of the Wiener process, `SS` lists the state space
+restrictions.
 """
-abstract type DiffusionProcess{T,DP,DW} end
+abstract type DiffusionProcess{T,DP,DW,SS} end
 
 """
-    dimension(d::DiffusionProcess{T,DP,DW})
+    dimension(::DiffusionProcess{T,DP,DW})
 
 Return dimension of the stochastic process and driving Brownian motion.
 """
-dimension(d::DiffusionProcess{T,DP,DW}) where {T,DP,DW} = (
+dimension(::DiffusionProcess{T,DP,DW}) where {T,DP,DW} = (
     process = DP,
     wiener = DW
 )
 
 """
-    eltype(d::DiffusionProcess{T}) where T = T
+    eltype(::DiffusionProcess{T}) where T = T
 
 Return the datatype that each coordinate of the stochastic process is stored in.
 """
-eltype(d::DiffusionProcess{T}) where T = T
+eltype(::DiffusionProcess{T}) where T = T
 
 """
-    LinearDiffusion{T,DP,DW} <: DiffusionProcess{T,DP,DW}
+    state_space(::DiffusionProcess{T,DP,DW,SS})
+
+Return the state space restrictions.
+"""
+state_space(::DiffusionProcess{T,DP,DW,SS}) where {T,DP,DW,SS} = SS
+
+"""
+    LinearDiffusion{T,DP,DW,SS} <: DiffusionProcess{T,DP,DW,SS}
 
 Types inheriting from `LinearDiffusion` define a linear Ito-type diffusion, i.e.
 solutions to stochastic differential equations of the form:
 dXₜ = (BₜXₜ + βₜ)dt + σₜdWₜ, t∈[0,T], X₀=x₀.
 """
-abstract type LinearDiffusion{T,DP,DW} <: DiffusionProcess{T,DP,DW} end
+abstract type LinearDiffusion{T,DP,DW,SS} <: DiffusionProcess{T,DP,DW,SS} end
 
 """
     DiffusionDomain

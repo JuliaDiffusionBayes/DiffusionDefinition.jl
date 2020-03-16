@@ -64,12 +64,12 @@ struct UpperBoundedStateSpace{T,S,N} <: DiffusionStateSpace
     end
 end
 
-```
+"""
     BoundedStateSpace{L,U} <: DiffusionStateSpace
 
-Upper & lower bounds imposed on the state-space of a diffusion process.
+Upper and lower bounds imposed on the state-space of a diffusion process.
 `L` corresponds to lower bounds, `U` corresponds to upper bounds.
-```
+"""
 struct BoundedStateSpace{L,U} <: DiffusionStateSpace
     function BoundedStateSpace(
         (coords_lower, bounds_lower),
@@ -134,4 +134,12 @@ Checks if all coordinates adhere to lower and upper bound restrictions
 """
 function bound_satisfied(::BoundedStateSpace{L,U}, x) where {L,U}
     bound_satisfied(L, x) && bound_satisfied(U, x)
+end
+
+function bound_info(::DiffusionProcess{T,DP,DW,SS}) where {T,DP,DW,SS}
+    bound_info(SS)
+end
+
+function bound_satisfied(::DiffusionProcess{T,DP,DW,SS}, x) where {T,DP,DW,SS}
+    bound_satisfied(SS, x)
 end
