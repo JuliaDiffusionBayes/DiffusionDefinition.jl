@@ -26,6 +26,9 @@ _LINEAR = [:linear, :lineardiffusion]
 _ELTYPE = [:eltype]
 _NUMNONHYPO = [:num_non_hypo, :numnonhypo]
 _PHI = [:phi, :ϕ, :φ]
+_PREDEFINEDDIFF = [:lorenz, :lotka_volterra, :lotka_volterra_aux]
+_NAMESDIFF = [:Lorenz, :LotkaVolterra, :LotkaVolterraAux]
+_EXAMPLESDIR = ["lorenz_system", "lotka_volterra", "lotka_volterra_aux"]
 
 """
     lowercase(s::Symbol)
@@ -65,6 +68,51 @@ https://github.com/mmider/DiffusionDefinition.jl
 """
 macro diffusion_process(name, ex::Expr, p...)
     parse_process(name, MacroTools.striplines(ex), p)
+end
+
+"""
+    load_diffusion()
+
+Displays available choices of predefined diffusion processes that can be loaded
+"""
+macro load_diffusion()
+    println("The following diffusions have been defined inside the package ",
+            "DiffusionDefinition.jl and can be loaded by calling a macro ",
+            "@load_diffusion name-of-a-diffusion:")
+    for d in _PREDEFINEDDIFF
+        println("- $d")
+    end
+    nothing
+end
+
+"""
+    load_diffusion(name)
+
+Loads the predefined diffusion process.
+"""
+macro load_diffusion(name)
+    if _symbol_in(name, _PREDEFINEDDIFF)
+        if typeof(name) <: QuoteNode
+            name = eval(name)
+        end
+        homedir = joinpath(@__DIR__, "..", "examples")
+        idx = argmax(name .== _PREDEFINEDDIFF)
+        filestemname = _EXAMPLESDIR[idx]
+        importname = _NAMESDIFF[idx]
+        dirname = (
+            filestemname[end-3:end] == "_aux" ?
+            filestemname[1:end-4] :
+            filestemname
+        )
+        path = joinpath(homedir, dirname, string(filestemname, ".jl"))
+        isfile(path) && include(path)
+        !isfile(path) && println("Error, diffusion $name is supposed to be ",
+                                "but it seems the file does not exist...")
+        return Meta.parse("import DiffusionDefinition.$importname")
+    else
+        println("Diffusion $name does not seem to be defined...")
+    end
+    nothing
 end
 
 """

@@ -19,10 +19,4 @@ function b(t, x, P::Lorenz)
     ]
 end
 
-function σ(t, x, P::Lorenz)
-    @SMatrix [
-        P.σ 0.0 0.0;
-        0.0 P.σ 0.0;
-        0.0 0.0 P.σ
-    ]
-end
+σ(t, x, P::Lorenz) = SDiagonal(P.σ, P.σ, P.σ)
