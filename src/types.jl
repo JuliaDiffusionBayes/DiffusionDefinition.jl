@@ -1,7 +1,15 @@
 #=
     Declarations of the main `types` used to define Ito diffusions
+    !! IMPORTANT !!
+    to define a diffusion one needs to define a struct and provide a drift
+    and a volatility coefficient functions:
+    `b`: denotes a drift
+    `σ`: denotes a volatility coefficient
+    `a`: (=:σσ') denotes a diffusivity coefficient
+    for linear diffusions
+    `B` and `β` jointly define the drift via `b(t,x):=Bₜx+βₜ`.
 =#
-
+using LinearAlgebra
 import Base: lowercase, eltype
 
 """
@@ -13,6 +21,8 @@ datatype of each coordinate, `DP` the dimension of the stochastic process,
 restrictions.
 """
 abstract type DiffusionProcess{T,DP,DW,SS} end
+
+a(t, x, P::DiffusionProcess) = σ(t, x, P) * σ(t, x, P)'
 
 """
     dimension(::DiffusionProcess{T,DP,DW})
@@ -46,6 +56,11 @@ solutions to stochastic differential equations of the form:
 dXₜ = (BₜXₜ + βₜ)dt + σₜdWₜ, t∈[0,T], X₀=x₀.
 """
 abstract type LinearDiffusion{T,DP,DW,SS} <: DiffusionProcess{T,DP,DW,SS} end
+
+b(t, x, P::LinearDiffusion) = B(t, P)*x + β(t, P)
+σ(t, x, P::LinearDiffusion) = σ(t, P)
+a(t, x, P::LinearDiffusion) = a(t, P)
+a(t, P::LinearDiffusion) = σ(t, P) * σ(t, P)'
 
 """
     DiffusionDomain
