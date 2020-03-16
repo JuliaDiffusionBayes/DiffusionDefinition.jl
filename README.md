@@ -13,17 +13,14 @@ For instance, to define a Lorenz system it is enough to write
 ```julia
 @diffusion_process Lorenz begin
     :dimensions
-    #---------
     process --> 3
     wiener --> 3
 
     :parameters
-    #---------
     _ --> (3, Float64)
     σ --> Float64
 
     :additional
-    #---------
     constdiff --> true
 end
 
@@ -35,12 +32,16 @@ function b(t, x, P::Lorenz)
     ]
 end
 
-function σ(t, x, P::Lorenz)
-    @SMatrix [
-        P.σ 0.0 0.0;
-        0.0 P.σ 0.0;
-        0.0 0.0 P.σ
-    ]
-end
+σ(t, x, P::Lorenz) = SDiagonal(P.σ, P.σ, P.σ)
 ```
-See the [documentation](https://mmider.github.io/DiffusionDefinition.jl/stable) for a comprehensive overview.
+We also provide some examples of pre-defined diffusion processes that can be
+imported without having to write any code with:
+```
+@load_diffusion :lorenz
+```
+To see a list of all pre-defined examples call
+```
+@load_diffusion
+```
+See the [documentation](https://mmider.github.io/DiffusionDefinition.jl/stable)
+for a comprehensive overview.
