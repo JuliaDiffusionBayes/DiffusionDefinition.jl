@@ -23,7 +23,7 @@
 end
 
 function b(t, x, P::FitzHughNagumoConjug)
-    @SVector [
+    ℝ{2}(
         x[2],
         (
             (P.ϵ - P.γ)*x[1]
@@ -32,7 +32,7 @@ function b(t, x, P::FitzHughNagumoConjug)
             - P.β
             - x[2]
         )
-    ]
+    )
 end
 
-σ(t, x, P::FitzHughNagumoConjug) = @SVector [0.0, P.σ]
+σ(t, x, P::FitzHughNagumoConjug) = ℝ{2}(0.0, P.σ)

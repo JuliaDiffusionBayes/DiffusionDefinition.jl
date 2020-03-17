@@ -11,6 +11,8 @@
 =#
 using LinearAlgebra
 import Base: lowercase, eltype
+using StaticArrays
+const ℝ{N} = SVector{N,Float64}
 
 """
     DiffusionProcess{T,DP,DW}

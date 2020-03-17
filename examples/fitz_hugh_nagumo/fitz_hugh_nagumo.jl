@@ -6,18 +6,15 @@
     :parameters
     (ϵ, s, γ, β, σ) --> Float64
 
-    :conjugate
-    nonhypo(x) --> x[2:2]
-
     :additional
     constdiff --> true
 end
 
 function b(t, x, P::FitzHughNagumo)
-    @SVector [
+    ℝ{2}(
         (x[1] - x[2] - x[1]^3 + P.s)/P.ϵ,
         P.γ*x[1] - x[2] + P.β
-    ]
+    )
 end
 
-σ(t, x, P::FitzHughNagumo) = @SVector [0.0, P.σ]
+σ(t, x, P::FitzHughNagumo) = ℝ{2}(0.0, P.σ)

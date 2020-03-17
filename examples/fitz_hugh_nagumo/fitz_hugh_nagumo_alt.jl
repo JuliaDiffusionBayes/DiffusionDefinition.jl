@@ -11,7 +11,7 @@
 end
 
 function b(t, x, P::FitzHughNagumoAlt)
-    @SVector [
+    ℝ{2}(
         x[2],
         -(
             (P.γ-1.0)*x[1]
@@ -21,7 +21,7 @@ function b(t, x, P::FitzHughNagumoAlt)
             + P.β
             + (3.0*x[1]^2 - 1.0)*x[2]
         )/P.ϵ
-    ]
+    )
 end
 
-σ(t, x, P::FitzHughNagumoAlt) = @SVector [0.0, P.σ/P.ϵ]
+σ(t, x, P::FitzHughNagumoAlt) = ℝ{2}(0.0, P.σ/P.ϵ)
