@@ -52,7 +52,8 @@ MathJax.Hub.Config({
       "bra": [
         "\\langle#1|",
         1
-      ]
+      ],
+      "dd": "{\\textrm d}"
     }
   },
   "tex2jax": {
