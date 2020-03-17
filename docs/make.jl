@@ -13,6 +13,8 @@ makedocs(;
                         :ket => ["|#1\\rangle", 1],
                         :bra => ["\\langle#1|", 1],
                         :dd => "{\\textrm d}",
+                        :RR => "\\mathbb{R}",
+                        :wt => ["\\widetilde{#1}", 1]
                     ),
                 )
             )
@@ -20,6 +22,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Overview" => Any[
+            "Defining diffusions" => joinpath("overview", "defining_diffusions.md"),
+            "Loading diffusions" => joinpath("overview", "load_diff.md"),
+        ],
         "Examples" => Any[
             "Lotka-Volterra system" => joinpath("examples", "lotka_volterra.md"),
             "Sine diffusion" => joinpath("examples", "sine.md"),
