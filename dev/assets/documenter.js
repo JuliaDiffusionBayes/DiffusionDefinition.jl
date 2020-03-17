@@ -49,6 +49,11 @@ MathJax.Hub.Config({
         "|#1\\rangle",
         1
       ],
+      "RR": "\\mathbb{R}",
+      "wt": [
+        "\\widetilde{#1}",
+        1
+      ],
       "bra": [
         "\\langle#1|",
         1
