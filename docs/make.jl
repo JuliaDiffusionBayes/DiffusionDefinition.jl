@@ -10,8 +10,6 @@ makedocs(;
                         :autoNumber => "AMS"
                     ),
                     :Macros => Dict(
-                        :ket => ["|#1\\rangle", 1],
-                        :bra => ["\\langle#1|", 1],
                         :dd => "{\\textrm d}",
                         :RR => "\\mathbb{R}",
                         :wt => ["\\widetilde{#1}", 1]

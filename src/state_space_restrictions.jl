@@ -1,7 +1,9 @@
-#=
-    Define structs responsible for determining the restrictions imposed on the
-    state space of a diffusion process
-=#
+#==============================================================================#
+#
+#    Structs responsible for determining the restrictions imposed on the
+#    state space of a diffusion process
+#
+#==============================================================================#
 
 """
     UnboundedStateSpace <: DiffusionStateSpace
@@ -29,22 +31,15 @@ struct LowerBoundedStateSpace{T,S,N} <: DiffusionStateSpace
 
     function LowerBoundedStateSpace(
         coords,
-        bounds::NTuple{N,Number},
-        ) where N
-        @assert length(coords) == N
-        @assert all( map(c->(typeof(c)<:Integer), coords) )
-        new{Tuple(coords), bounds, N}()
-    end
-
-    function LowerBoundedStateSpace(
-        coords,
-        bounds::Vector{<:Number},
+        bounds,
         )
         N = length(bounds)
         @assert length(coords) == N
         @assert all( map(c->(typeof(c)<:Integer), coords) )
+        @assert all( map(b->(typeof(b)<:Number), bounds) )
         new{Tuple(coords), Tuple(bounds), N}()
     end
+
 end
 
 bound_info(::LowerBoundedStateSpace{T,S,N}) where {T,S,N} = T,S,N

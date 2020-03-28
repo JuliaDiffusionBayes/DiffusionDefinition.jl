@@ -4,8 +4,6 @@
             used for defining diffusion processes
 
 ===============================================================================#
-using MacroTools, StaticArrays
-
 # define some names for the document
 _DIMENSIONS = [:dimensions, :dim, :dims, :dimension]
 _PARAMETERS = [:parameters, :param, :params]
@@ -93,7 +91,7 @@ macro load_diffusion(name)
             name = eval(name)
         end
         homedir = joinpath(@__DIR__, "..", "examples")
-        importname = _ACCEPTEDNAMES_TO_NAMES[name]
+        importname = _ACCEPTEDNAMES_TO_NAMES[lowercase(name)]
         filepath = _NAMES_TO_PATH[importname]
         path = joinpath(homedir, filepath)
         isfile(path) && include(path)
@@ -354,11 +352,11 @@ end
 Construct a `phi` function used for conjugate updates.
 """
 function add_phi_function!(
-    expr::Expr,
-    fns::Vector{Expr},
-    t::Symbol,
-    x::Symbol,
-    p
+        expr::Expr,
+        fns::Vector{Expr},
+        t::Symbol,
+        x::Symbol,
+        p
     )
     idx = length(fns)
     name = p.name
@@ -400,6 +398,8 @@ function cleanup_param_names!(expr, t::Symbol, x::Symbol, params)
         end
     end
 end
+
+cleanup_param_names!(num::Number, t::Symbol, x::Symbol, params) = num
 
 #------------------------------------------------------------------------------#
 #

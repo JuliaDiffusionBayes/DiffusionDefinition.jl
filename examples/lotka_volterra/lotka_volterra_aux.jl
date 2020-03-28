@@ -22,9 +22,9 @@
 
     :additional
     constdiff --> true
-    statespace --> LowerBoundedStateSpace((1,2),(0.0, 0.0))
+    linear --> true
 end
 
-B(t, P::LotkaVolterraAux) = @SMatrix [-0.0 -P.β*P.γ/P.δ; P.α*P.δ/P.β -0.0]
-β(t, P::LotkaVolterraAux) = ℝ{2}(P.γ/P.δ*P.α, -P.α/P.β*P.γ)
-σ(t, P::LotkaVolterraAux) = SDiagonal(P.σ1, P.σ2)
+DiffusionDefinition.B(t, P::LotkaVolterraAux) = @SMatrix [-0.0 -P.β*P.γ/P.δ; P.α*P.δ/P.β -0.0]
+DiffusionDefinition.β(t, P::LotkaVolterraAux) = ℝ{2}(P.γ/P.δ*P.α, -P.α/P.β*P.γ)
+DiffusionDefinition.σ(t, P::LotkaVolterraAux) = SDiagonal(P.σ1, P.σ2)
