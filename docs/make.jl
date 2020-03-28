@@ -36,12 +36,12 @@ makedocs(;
             "Jansen-Rit model" => joinpath("examples", "jansen_rit.md"),
         ],
     ],
-    repo="https://github.com/mmider/DiffusionDefinition.jl/blob/{commit}{path}#L{line}",
+    repo="https://github.com/diffusionbayes/DiffusionDefinition.jl/blob/{commit}{path}#L{line}",
     sitename="DiffusionDefinition.jl",
     authors="Marcin Mider",
     assets=String[],
 )
 
 deploydocs(;
-    repo="github.com/mmider/DiffusionDefinition.jl",
+    repo="github.com/diffusionbayes/DiffusionDefinition.jl",
 )
