@@ -1,12 +1,5 @@
 # DiffusionDefinition.jl
 
-This is a small utility package for defining diffusion processes, created to work in conjunction with [BridgeSDEInference.jl](https://github.com/mmider/BridgeSDEInference.jl).
+This is a small utility package for defining diffusion processes and sampling from their laws. It is created to work in conjunction with a suite of packages in [JuliaDiffusionBayes](https://github.com/JuliaDiffusionBayes) to provide tools for Bayesian inference for diffusion processes.
 
-[See how to define diffusion processes with this package](/overview/defining_diffusions)
-
-```@index
-```
-
-```@autodocs
-Modules = [DiffusionDefinition]
-```
+To get started [see how to define diffusion processes with this package](/overview/defining_diffusions)

@@ -234,27 +234,3 @@ function solve!(
     end
     true
 end
-
-
-
-
-
-#=
-@time rand(0.0:0.01:1.0, Wiener(), zero(SVector{10,Float64}))
-@time rand(0.0:0.01:1.0, Wiener{10}(), zeros(Float64, 10))
-
-
-using BenchmarkTools
-
-N = 3
-tr = trajectory(collect(0.0:0.01:1.0), rand(SVector{N,Float64},101))
-wr = Wiener()
-rand!(tr, wr)
-@benchmark rand!(tr, wr)
-
-tr2 = trajectory(collect(0.0:0.01:1.0), [rand(N) for _ in 1:101]
-)
-wr2 = Wiener(N)
-rand!(tr2, wr2)
-@benchmark rand!(tr2, wr2)
-=#

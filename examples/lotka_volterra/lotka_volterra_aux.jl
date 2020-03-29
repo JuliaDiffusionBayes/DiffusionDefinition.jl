@@ -1,24 +1,12 @@
-@diffusion_process LotkaVolterraAux begin
+@diffusion_process LotkaVolterraAux{K,R} begin
     :dimensions
     process --> 2
     wiener --> 2
 
     :parameters
-    (α, β, γ, δ, σ1, σ2, t, T) --> Float64
-    (u, v) --> ℝ{2}
-
-    :conjugate
-    phi(t, x) --> (
-        (0.0, 0.0),
-        (x[1], 0.0),
-        (-x[1]*x[2], 0.0),
-        (0.0, x[1]*x[2]),
-        (0.0, -x[2]),
-        (0.0, 0.0),
-        (0.0, 0.0)
-    )
-    nonhypo(x) --> x
-    num_non_hypo --> 2
+    (α, β, γ, δ, σ1, σ2) --> K
+    (t, T) --> Float64
+    (u, v) --> R
 
     :additional
     constdiff --> true
