@@ -3,7 +3,6 @@ module DiffusionDefinition
     using Random, Trajectories
     using LinearAlgebra, StaticArrays
     using MacroTools
-    import Base: lowercase, eltype
 
     const ℝ{N} = SVector{N,Float64}
 

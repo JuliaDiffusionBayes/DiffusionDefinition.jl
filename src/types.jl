@@ -35,11 +35,11 @@ dimension(::DiffusionProcess{T,DP,DW}) where {T,DP,DW} = (
 )
 
 """
-    eltype(::DiffusionProcess{T}) where T = T
+    Base.eltype(::DiffusionProcess{T}) where T = T
 
 Return the datatype that each coordinate of the stochastic process is stored in.
 """
-eltype(::DiffusionProcess{T}) where T = T
+Base.eltype(::DiffusionProcess{T}) where T = T
 
 """
     state_space(::DiffusionProcess{T,DP,DW,SS})

@@ -34,6 +34,21 @@ end
 
 σ(t, x, P::Lorenz) = SDiagonal(P.σ, P.σ, P.σ)
 ```
+It is also possible to also include template parameters, for instance:
+```julia
+@diffusion_process Lorenz{T} begin
+    :dimensions
+    process --> 3
+    wiener --> 3
+
+    :parameters
+    _ --> (3, T)
+    σ --> Float64
+
+    :additional
+    constdiff --> true
+end
+```
 We also provide some examples of pre-defined diffusion processes that can be
 imported without having to write any code with:
 ```

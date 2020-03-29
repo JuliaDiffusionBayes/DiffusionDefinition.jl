@@ -26,11 +26,11 @@ _NUMNONHYPO = [:num_non_hypo, :numnonhypo]
 _PHI = [:phi, :ϕ, :φ]
 
 """
-    lowercase(s::Symbol)
+    Base.lowercase(s::Symbol)
 
 Lowercase all letters in a symbol
 """
-lowercase(s::Symbol) = Symbol(lowercase(string(s)))
+Base.lowercase(s::Symbol) = Symbol(lowercase(string(s)))
 
 """
     _symbol_in(s::Symbol, symbols)
@@ -113,8 +113,11 @@ import the struct name to `Main` scope, in which the package has been imported
 to.
 """
 function parse_process(name , ex::Expr, ::Any)
+    name, curly_name, template_args = process_name(name)
     p = (
         name = name,
+        curly_name = curly_name,
+        template_args = template_args,
         parameters = Vector{Tuple{Symbol,Union{Symbol,Expr},Symbol,Int64}}(
             undef,
             0
@@ -123,6 +126,7 @@ function parse_process(name , ex::Expr, ::Any)
         extras = Dict{Symbol, Any}(),
         fns = Vector{Expr}(undef, 0),
     )
+
     # parse lines defining parameters to get all parameter names first
     parse_lines!(ex, p, x->(x == _PARAMETERS[1]))
     # parse all other lines
@@ -135,7 +139,7 @@ function parse_process(name , ex::Expr, ::Any)
         p.extras[_ELTYPE[1]],
         p.extras[_STATESPACE[1]],
     )
-    struct_def = createstruct(abstract_type, name, p.parameters)
+    struct_def = createstruct(abstract_type, p)
     add_constdiff_function!(p.fns, p)
     eval(struct_def)
     for fn in p.fns
@@ -143,6 +147,16 @@ function parse_process(name , ex::Expr, ::Any)
     end
     Meta.parse("import DiffusionDefinition.$name")
 end
+
+"""
+    process_name
+
+Process the name of a struct by returning the pure name (without template
+arguments), the name with template arguments and a list of template arguments.
+"""
+function process_name end
+process_name(name::Symbol) = name, name, Any[]
+process_name(name::Expr) = name.args[1], name, name.args[2:end]
 
 """
     parse_lines!(ex::Expr, p, condition)
@@ -188,12 +202,12 @@ format:
     name --> parameter-description
 """
 function parse_line!(::Val{:parameters}, line, p)
-    data_type = line.args[1]
+    param_name = line.args[1]
 
-    if typeof(data_type) <: Symbol
+    if typeof(param_name) <: Symbol
         parse_param_single_name(line, p)
     else
-        @assert data_type.head == :tuple
+        @assert param_name.head == :tuple
         parse_param_multi_names(line, p)
     end
 end
@@ -210,11 +224,13 @@ In the former case defines `number_of_parameters`-many parameters, with names
 single parameters with name `parameter_name` and of type `datatype`.
 """
 function parse_param_single_name(line, p)
-    name_stem, disambig_idx, generic_name = get_name_stem(line.args[1], p.parameters)
+    name_stem, disambig_idx, generic_name = get_name_stem(
+        line.args[1], p.parameters
+    )
 
     data_type = line.args[2]
 
-    if typeof(eval(data_type)) <: DataType
+    if _is_datatype(data_type, p)
         num_params = 1
     else
         @assert data_type.head == :tuple
@@ -226,6 +242,19 @@ function parse_param_single_name(line, p)
         name = ( generic_name ? Symbol(name_stem, disambig_idx+i) : name_stem )
         append!(p.parameters, [(name, data_type, name_stem, disambig_idx+i)])
     end
+end
+
+"""
+    _is_datatype(sym, p)
+
+Utility function that checks whether `sym` is a datatype. It returns true if
+`sym` is either an in-built datatype (say float, StaticArray etc.) or if it is a
+template argument.
+"""
+function _is_datatype(sym, p)
+    (sym in p.template_args) && return true
+    typeof(sym) <: Expr && sym.head == :tuple && return false
+    typeof(eval(sym)) <: DataType
 end
 
 """
@@ -270,19 +299,20 @@ function parse_param_multi_names(line, p)
     names = line.args[1].args
     data_types = line.args[2]
 
-    if typeof(eval(data_types)) <: DataType
+    if _is_datatype(data_types, p)
         data_types = repeat([data_types], length(names))
     else
         @assert data_types.head == :tuple
-        if typeof(eval(data_types.args[1])) <: Number
+        if _is_datatype(data_types.args[1], p)
+            @assert length(data_types.args) == length(names)
+            @assert all( map(x->_is_datatype(x, p), data_types.args) )
+            data_types = data_types.args
+        else
+            @assert typeof(eval(data_types.args[1])) <: Number
             @assert length(data_types.args) == 2
             @assert eval(data_types.args[1]) == length(names)
-            @assert typeof(eval(data_types.args[2])) <: DataType
+            @assert _is_datatype(data_types.args[2], p)
             data_types = repeat([data_types.args[2]], length(names))
-        else
-            @assert length(data_types.args) == length(names)
-            @assert all(map(x->(typeof(eval(x))<:DataType), data_types.args))
-            data_types = data_types.args
         end
     end
 
@@ -517,8 +547,13 @@ Create a string defining a parent, abstract type from its `stem`, the dimensions
 of each coordinate and the restrictions on the state space `state_restr`.
 """
 function prepare_abstract_type(stem, dims, data_type, state_restr)
-    wiener_dim, proc_dim = dims[_WIENER[1]], dims[_PROCESS[1]]
-    "$stem{$data_type,$proc_dim,$wiener_dim,$state_restr}"
+    Expr(:curly,
+        stem,
+        data_type,
+        dims[_PROCESS[1]],
+        dims[_WIENER[1]],
+        state_restr,
+    )
 end
 
 """
@@ -526,10 +561,45 @@ end
 
 Create code that defines a struct defining a diffusion process.
 """
-function createstruct(abstract_type, name, params)
-    header = "struct $name <: $abstract_type\n"
-    params_vec = map(params) do (name, data_type, _, _)
-        "\t$name::$data_type\n"
+function createstruct(abstract_type, p)
+    param_vec = map(p.parameters) do (name, data_type, _, _)
+        Expr(:(::), name, data_type)
     end
-    Meta.parse(string(header, join(params_vec), "end\n"))
+
+    _new = (
+        p.template_args == Any[] ?
+        :new :
+        Expr(:curly, :new, p.template_args...,)
+    )
+
+    constructor_def = Expr(:call, p.name, param_vec...,)
+
+    constructor_def = (
+        p.template_args == Any[] ?
+        constructor_def :
+        Expr(:where,
+            constructor_def,
+            p.template_args...,
+        )
+    )
+
+    Expr(:struct,
+        false, # immutable
+        Expr(:<:,
+            p.curly_name,
+            abstract_type,
+        ), # first line defining the struct
+        Expr(:block,
+            param_vec..., # parameters
+            Expr(:function, # constructor
+                constructor_def,
+                Expr(:block,
+                    Expr(:call,
+                        _new,
+                        map(x->x[1], p.parameters)...,
+                    ),
+                ), # body of the constructor
+            ), # constructor
+        ), # body defining the struct
+    )
 end

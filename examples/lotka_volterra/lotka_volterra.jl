@@ -6,6 +6,19 @@
     :parameters
     (α, β, γ, δ, σ1, σ2) --> Float64
 
+    :conjugate
+    phi(t, x) --> (
+        (0.0, 0.0),
+        (x[1], 0.0),
+        (-x[1]*x[2], 0.0),
+        (0.0, x[1]*x[2]),
+        (0.0, -x[2]),
+        (0.0, 0.0),
+        (0.0, 0.0)
+    )
+    nonhypo(x) --> x
+    num_non_hypo --> 2
+
     :additional
     constdiff --> true
     statespace --> LowerBoundedStateSpace((1,2),(0.0, 0.0))
