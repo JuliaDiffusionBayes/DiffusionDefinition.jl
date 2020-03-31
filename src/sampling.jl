@@ -196,7 +196,7 @@ function solve!(
     for i in 2:N
         dt = tt[i] - tt[i-1]
         dW = ww[i] - ww[i-1]
-        yy[i] = yy[i-1] + b(tt[i-1], yy[i-1], P)*dt + σ(tt[i-1], yy[i-1], P)*dW
+        yy[i] = yy[i-1] + _b((tt[i-1], i-1), yy[i-1], P)*dt + _σ((tt[i-1], i-1), yy[i-1], P)*dW
         bound_satisfied(P, yy[i]) || return false
     end
     true
@@ -221,8 +221,8 @@ function solve!(
     for i in 2:N
         dt = tt[i] - tt[i-1]
         y = yy[i-1]
-        b!(buffer, tt[i-1], y, P)
-        σ!(buffer, tt[i-1], y, P)
+        _b!(buffer, (tt[i-1], i-1), y, P)
+        _σ!(buffer, (tt[i-1], i-1), y, P)
         for j in 1:dim_proc
             buffer.dW[j] = ww[i][j] - ww[i-1][j]
         end

@@ -66,6 +66,8 @@ on the state-space of the stochastic process.
 abstract type DiffusionStateSpace end
 
 
+const IndexedTime = Tuple{T,S} where {T<:Number,S<:Integer}
+
 #------------------------------------------------------------------------------#
 #       Names for functions defining drifts and volatility coefficients
 #------------------------------------------------------------------------------#
@@ -147,6 +149,9 @@ store temporary results).
 """
 function a! end
 
+
+function constdiff end
+
 #------------------------------------------------------------------------------#
 #                     Default fallbacks for linear diffusions
 #------------------------------------------------------------------------------#
@@ -163,3 +168,13 @@ b(t, x, P::LinearDiffusion) = B(t, P)*x + β(t, P)
 σ(t, x, P::LinearDiffusion) = σ(t, P)
 a(t, x, P::LinearDiffusion) = a(t, P)
 a(t, P::LinearDiffusion) = σ(t, P) * σ(t, P)'
+
+#------------------------------------------------------------------------------#
+#
+#                   Default fallbacks for indexed time
+#
+#------------------------------------------------------------------------------#
+_b((t,i)::IndexedTime, x, P::DiffusionProcess) = b(t, x, P)
+_σ((t,i)::IndexedTime, x, P::DiffusionProcess) = σ(t, x, P)
+_b!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = b!(buffer, t, x, P)
+_σ!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = σ!(buffer, t, x, P)
