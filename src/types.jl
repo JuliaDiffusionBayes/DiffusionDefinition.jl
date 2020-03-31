@@ -149,6 +149,9 @@ store temporary results).
 """
 function a! end
 
+
+function constdiff end
+
 #------------------------------------------------------------------------------#
 #                     Default fallbacks for linear diffusions
 #------------------------------------------------------------------------------#
