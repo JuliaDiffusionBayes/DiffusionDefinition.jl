@@ -58,13 +58,13 @@ We additionally provide some functionality for sampling trajectories. For instan
 ```julia
 const DD = DiffusionDefinition
 tt = collect(0.0:0.01:1.0)
-wiener_path = rand(tt, wiener(), zero(DD.ℝ{3}))
+wiener_path = rand(tt, Wiener(), zero(DD.ℝ{3}))
 ```
 The wiener path can then be used in an Euler-Maruyama scheme to compute a trajectory under a given diffusion law:
 ```julia
 XX = trajectory(tt, DD.ℝ{3})
 P = Lorenz(28.0, 10.0, 8.0/3.0, 2.0)
-DD.solve!(XX, WW, P, zero(DD.ℝ{3}))
+DD.solve!(XX, wiener_path, P, zero(DD.ℝ{3}))
 ```
 See the [documentation](https://JuliaDiffusionBayes.github.io/DiffusionDefinition.jl/stable)
 for a comprehensive overview.
