@@ -184,11 +184,11 @@ solve!(XX, WW, P, y1, buffer) = solve!(EulerMaruyama(), XX, WW, P, y1, buffer)
 
 function solve!(
         ::EulerMaruyama,
-        XX::Trajectory{T,Vector{K}},
-        WW::Trajectory{T,Vector{K}},
+        XX::Trajectory{T,Vector{KX}},
+        WW::Trajectory{T,Vector{KW}},
         P,
-        y1::K,
-    ) where {K,T}
+        y1::KX,
+    ) where {KX,KW,T}
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
 
@@ -212,7 +212,7 @@ function solve!(
     ) where {K,T}
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
-    dim_proc = dimension(P).process
+    dim_proc, dim_wiener = dimension(P)
 
     yy[1] = y1
     dt = tt[2] - tt[1]
@@ -223,7 +223,7 @@ function solve!(
         y = yy[i-1]
         _b!(buffer, (tt[i-1], i-1), y, P)
         _σ!(buffer, (tt[i-1], i-1), y, P)
-        for j in 1:dim_proc
+        for j in 1:dim_wiener
             buffer.dW[j] = ww[i][j] - ww[i-1][j]
         end
         mul!(yy[i], buffer.σ, buffer.dW)
