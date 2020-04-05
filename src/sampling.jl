@@ -85,7 +85,7 @@ a default random number generator.
 function Random.rand!(
         path::Trajectory{T,Vector{K}},
         w::Wiener{D},
-        y1=zero(K,D,ismutable(K))
+        y1=zero(K, D, ismutable(K))
     ) where {T,K,D}
     rand!(Random.GLOBAL_RNG, path, w, y1)
 end
@@ -152,13 +152,13 @@ end
 Samples Wiener process on `tt`, started from `y1` and returns a new object with
 a sampled trajectory.
 """
-Base.rand(tt, w::Wiener, y1) = rand(Random.GLOBAL_RNG, tt, w, y1)
+Base.rand(w::Wiener, y1, tt) = rand(Random.GLOBAL_RNG, w, y1, tt)
 
 function Base.rand(
         rng::Random.AbstractRNG,
-        tt,
         w::Wiener{D},
-        y1::K
+        y1::K,
+        tt,
     ) where {D,K}
     path = trajectory(tt, K, D, ismutable(K))
     rand!(rng, path, w, y1)
@@ -208,7 +208,7 @@ function solve!(
         WW::Trajectory{T,Vector{Vector{K}}},
         P,
         y1::Vector{K},
-        buffer=StandardEulerBuffer{K}(dimensions(P)...)
+        buffer=StandardEulerBuffer{K}(dimension(P)...)
     ) where {K,T}
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
@@ -233,4 +233,52 @@ function solve!(
         bound_satisfied(P, yy[i]) || return false
     end
     true
+end
+
+Base.rand(P::DiffusionProcess, y1, tt) = rand(Random.GLOBAL_RNG, P, y1, tt, ismutable(y1))
+
+function Base.rand(
+        rng::Random.AbstractRNG,
+        P::DiffusionProcess{T,DP,DW},
+        y1::K,
+        tt,
+        v::Val{true}
+    ) where {T,DP,DW,K}
+    WW = rand(rng, Wiener{DW}(), zeros(eltype(y1), DW), tt)
+    XX = trajectory(tt, K, DP, v)
+    success = false
+    buffer = StandardEulerBuffer{eltype(K)}(dimension(P)...)
+    while !success
+        success = solve!(XX, WW, P, y1, buffer)
+    end
+    XX
+end
+
+function Base.rand(
+        rng::Random.AbstractRNG,
+        P::DiffusionProcess{T,DP,DW},
+        y1::K,
+        tt,
+        v::Val{false}
+    ) where {T,DP,DW,K}
+    WW = rand(rng, Wiener(), _zero(y1, Val(DW)), tt)
+    XX = trajectory(tt, K, DP, v)
+    success = false
+    while !success
+        success = solve!(XX, WW, P, y1)
+    end
+    XX
+end
+
+
+function _zero(x::K, ::Val{D}) where {K,D}
+    (
+        K <: Number ?
+        zero(K) :
+        (
+            K <: SArray ?
+            zero(SVector{D}) :
+            error("other immutable types not implemented")
+        )
+    )
 end
