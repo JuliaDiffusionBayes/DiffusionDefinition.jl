@@ -8,7 +8,7 @@ For instance, to sample a three-dimensional standard Brownian motion use:
 ```julia
 const DD = DiffusionDefinition
 tt = collect(0.0:0.01:1.0)
-wiener_path = rand(tt, Wiener(), zero(DD.ℝ{3}))
+wiener_path = rand(Wiener(), zero(DD.ℝ{3}), tt)
 ```
 The wiener path can then be used in an Euler-Maruyama scheme to compute a trajectory under a given diffusion law:
 ```julia
