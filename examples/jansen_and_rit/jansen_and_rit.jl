@@ -41,7 +41,6 @@ function b(t, x, P::JansenRit)
         P.A*P.a*(μx(t, P) + sigm(x[2] - x[3], P)) - 2P.a*x[4] - P.a*P.a*x[1],
         P.A*P.a*(μy(t, P) + 0.8P.C*sigm(P.C*x[1], P)) - 2P.a*x[5] - P.a*P.a*x[2],
         P.B*P.b*(μz(t, P) + 0.25P.C*sigm(0.25P.C*x[1], P)) - 2P.b*x[6] - P.b*P.b*x[3])
-    )
 end
 
 function σ(t, x, P::JansenRit)
