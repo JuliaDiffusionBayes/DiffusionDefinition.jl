@@ -8,6 +8,14 @@
 _DIMENSIONS = [:dimensions, :dim, :dims, :dimension]
 _PARAMETERS = [:parameters, :param, :params]
 _CONJUGATE = [:conjugate]
+_ENDPOINTINFO = [:aux_info, :auxiliary_info, :end_points, :end_point_info]
+_ENDPOINTEXTRA = [
+    [:t0, :t_0],
+    [:T],
+    [:v0, :obs0, :v_0, :obs_0],
+    [:vT, :obsT,  :v_T, :obs_T, ],
+    [:xT, :yT, :stateT, :x_T, :y_T, :state_T],
+]
 _EXTRA = [:additional, :extra]
 _WIENER = [:wiener, :noise, :gaus, :gaussian]
 _PROCESS = [:proc, :process, :state, :statespace]
@@ -139,12 +147,30 @@ function parse_process(name , ex::Expr, ::Any)
         p.extras[_ELTYPE[1]],
         p.extras[_STATESPACE[1]],
     )
+    #struct_def, struct_body, struct_const = createstruct(abstract_type, p)
     struct_def = createstruct(abstract_type, p)
+
+    #struct_def = Expr(
+    #    :macrocall,
+    #    :(Core.@doc),
+    #    join(repr(struct_body), "\n\n\t", repr(struct_const)),
+    #    struct_def,
+    #)
+
     add_constdiff_function!(p.fns, p)
+    add_extra_info_function!(p.fns, p)
+    add_parameters_function!(p.fns, p)
+    add_extra_info_names_function!(p.fns, p)
+    add_parameter_names_function!(p.fns, p)
+
     eval(struct_def)
     for fn in p.fns
         eval(fn)
     end
+    println("A new struct `$curly_name` has been defined.")
+    println("To learn more about how to define an instance of this struct")
+    println("please type in `?$name` and hit `ENTER`.")
+
     Meta.parse("import DiffusionDefinition.$name")
 end
 
@@ -184,6 +210,7 @@ template is supposed to be encoding.
 function update_label(line, current_label)
     _symbol_in(line, _DIMENSIONS) && return _DIMENSIONS[1]
     _symbol_in(line, _PARAMETERS) && return _PARAMETERS[1]
+    _symbol_in(line, _ENDPOINTINFO) && return _ENDPOINTINFO[1]
     _symbol_in(line, _CONJUGATE) && return _CONJUGATE[1]
     _symbol_in(line, _EXTRA) && return _EXTRA[1]
     current_label
@@ -321,6 +348,97 @@ function parse_param_multi_names(line, p)
         @assert !(n in current_param_names)
         append!(p.parameters, [(n,d,n,1)])
     end
+end
+
+
+function add_parameters_function!(fns, p)
+    fn_def = Expr(
+        :call,
+        :parameters,
+        Expr(:(::),
+            :P,
+            p.name
+        )
+    )
+    fn_body = Expr(
+        :tuple,
+        [Expr(:., :P, QuoteNode(x[1])) for x in p.parameters]...,
+    )
+    push!(fns, Expr(:(=), fn_def, fn_body))
+end
+
+function add_parameter_names_function!(fns, p)
+    fn_def = Expr(
+        :call,
+        :parameter_names,
+        Expr(:(::),
+            :P,
+            p.name
+        )
+    )
+    fn_body = Expr(
+        :tuple,
+        [QuoteNode(x[1]) for x in p.parameters]...,
+    )
+    push!(fns, Expr(:(=), fn_def, fn_body))
+end
+
+
+#------------------------------------------------------------------------------#
+#
+#                      For parsing: END POINT INFORMATION
+#
+#------------------------------------------------------------------------------#
+"""
+    parse_line!(::Val{:aux_info}, line, p)
+
+Parse a line that defines parameters of the diffusion. The line must be in a
+format:
+    name --> parameter-description
+"""
+function parse_line!(::Val{:aux_info}, line, p)
+    name = line.args[1]
+    for i in 1:5
+        _symbol_in(name, _ENDPOINTEXTRA[i]) && (name = _ENDPOINTEXTRA[i][1])
+    end
+
+    p.extras[name] = line.args[2]
+end
+
+function add_extra_info_function!(fns, p)
+    fn_def = Expr(
+        :call,
+        :extra_info,
+        Expr(:(::),
+            :P,
+            p.name
+        )
+    )
+    _, used_names = organize_extra_info(p)
+
+    fn_body = Expr(
+        :tuple,
+        [Expr(:., :P, QuoteNode(name)) for name in used_names]...,
+    )
+    push!(fns, Expr(:(=), fn_def, fn_body))
+end
+
+function add_extra_info_names_function!(fns, p)
+    fn_def = Expr(
+        :call,
+        :extra_info_names,
+        Expr(:(::),
+            :P,
+            p.name
+        )
+    )
+    _, used_names = organize_extra_info(p)
+
+    fn_body = Expr(
+        :tuple,
+        [QuoteNode(name) for name in used_names]...,
+    )
+    push!(fns, Expr(:(=), fn_def, fn_body))
 end
 
 #------------------------------------------------------------------------------#
@@ -565,6 +683,7 @@ function createstruct(abstract_type, p)
     param_vec = map(p.parameters) do (name, data_type, _, _)
         Expr(:(::), name, data_type)
     end
+    extra_info_vec, extra_info_used_names = organize_extra_info(p)
 
     _new = (
         p.template_args == Any[] ?
@@ -572,7 +691,31 @@ function createstruct(abstract_type, p)
         Expr(:curly, :new, p.template_args...,)
     )
 
-    constructor_def = Expr(:call, p.name, param_vec...,)
+    constructor_def = Expr(
+        :call,
+        p.name,
+        param_vec...,
+        extra_info_vec[1:end-1]...,
+        (
+            length(extra_info_vec)>0 ?
+            [
+                Expr(:kw,
+                    extra_info_vec[end],
+                    Expr(
+                        :call,
+                        Expr(
+                            :.,
+                            :DiffusionDefinition,
+                            :(:custom_zero),
+                        ),
+                        p.dims[_PROCESS[1]],
+                        extra_info_vec[end].args[2],
+                    ),
+                )
+            ] :
+            []
+        )...
+    )
 
     constructor_def = (
         p.template_args == Any[] ?
@@ -583,7 +726,7 @@ function createstruct(abstract_type, p)
         )
     )
 
-    Expr(:struct,
+    struct_def = Expr(:struct,
         false, # immutable
         Expr(:<:,
             p.curly_name,
@@ -591,15 +734,49 @@ function createstruct(abstract_type, p)
         ), # first line defining the struct
         Expr(:block,
             param_vec..., # parameters
+            extra_info_vec..., # extra info about end-points
             Expr(:function, # constructor
                 constructor_def,
                 Expr(:block,
                     Expr(:call,
                         _new,
                         map(x->x[1], p.parameters)...,
+                        extra_info_used_names...,
                     ),
                 ), # body of the constructor
             ), # constructor
         ), # body defining the struct
     )
+    struct_def#, Expr(:block, param_vec..., extra_info_vec...,), constructor_def
+end
+
+function organize_extra_info(p)
+    extra_info_names = [:t0, :T, :v0, :vT, :xT]
+    extra_info_vec = Any[]
+    extra_info_used_names = Symbol[]
+    if any([haskey(p.extras, eio) for eio in extra_info_names])
+        for name in [:t0, :T, :v0, :vT]
+            haskey(p.extras, name) && (
+                push!(extra_info_vec, Expr(:(::), name, p.extras[name]));
+                push!(extra_info_used_names, name)
+            )
+        end
+        # the space for the exact end-point must always be there due to blocking
+        default_datatype = find_state_datatype(
+            p.extras[_ELTYPE[1]], # eltype
+            p.dims[_PROCESS[1]], # dim of the process
+        )
+        push!(
+            extra_info_vec,
+            Expr(:(::), :xT, get(p.extras, :xT, default_datatype))
+        )
+        push!(extra_info_used_names, :xT)
+    end
+    extra_info_vec, extra_info_used_names
+end
+
+
+function find_state_datatype(_eltype, dim_process)
+    dim_process < 9 && return SVector{dim_process,eval(_eltype)}
+    return Vector{eval(_eltype)}
 end

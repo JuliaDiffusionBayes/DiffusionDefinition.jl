@@ -16,7 +16,10 @@ DD = DiffusionDefinition
         (theta, alpha) --> (2, Int32)
         (beta, gamma) --> Float32
         (yota, zeta) --> (Float64, Int64)
-        v --> SArray{Tuple{4},Float64,1,4}
+
+        :aux_info
+        T --> Float64
+        vT --> SArray{Tuple{4},Float64,1,4}
 
         :conjugate
         phi(t, u) --> (
@@ -33,10 +36,10 @@ DD = DiffusionDefinition
         eltype --> Float64
     end a b c d
 
-
-    P = TestDiffusion(1.0, 2.0, 3.0, 4.0, 5, 6, Int32(7), Int32(8),
-                      Float32(9.0), Float32(10.0), 11.0, 12,
-                      @SVector [1.0, 2.0, 3.0, 4.0])
+    param_tuple = (1.0, 2.0, 3.0, 4.0, 5, 6, Int32(7), Int32(8),
+                      Float32(9.0), Float32(10.0), 11.0, 12)
+    extra_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
+    P = TestDiffusion(param_tuple..., extra_info_tuple...)
 
     @test DD.nonhypo(P, :x) == :x
     @testset "satisfying bounds" begin
@@ -48,6 +51,42 @@ DD = DiffusionDefinition
     @test typeof(P) <: DD.DiffusionProcess
     @test !(typeof(P) <: DD.LinearDiffusion)
     @test eltype(P) == Float64
+
+    @test DD.parameter_names(P) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
+    @test DD.parameters(P) == param_tuple
+    @test DD.extra_info_names(P) == (:T, :vT, :xT)
+    @test DD.extra_info(P) == (extra_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
+
+    @diffusion_process TestDiffusion2 begin
+        :dimensions
+        process --> 3
+        wiener --> 5
+
+        :parameters
+        _ --> (3, Float64)
+
+        :aux_info
+        T --> Float64
+        vT --> SArray{Tuple{4},Float64,1,4}
+
+    end
+
+    param_tuple = (1.0, 2.0, 3.0)
+    extra_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
+
+    P = TestDiffusion2(param_tuple..., extra_info_tuple...)
+
+    @test DD.parameter_names(P) == (:p1, :p2, :p3)
+    @test DD.parameters(P) == param_tuple
+    @test DD.extra_info_names(P) == (:T, :vT, :xT)
+    @test DD.extra_info(P) == (extra_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
+
+    P1 = TestDiffusion2(1.0, 1.0, 1.0, extra_info_tuple...)
+    P2 = TestDiffusion2(1.0, 1.0, 1.0, 1.0, (@SVector [1.0, 1.0, 1.0, 1.0]), (@SVector [1.0, 1.0, 1.0]))
+
+    @test DD.update_params(P, [1.0, 1.0, 1.0]...) == P1
+
+    @test DD.clone(P, [1.0, 1.0, 1.0]..., [1.0, (@SVector [1.0, 1.0, 1.0, 1.0]), (@SVector [1.0, 1.0, 1.0])]...) == P2
 end
 
 

@@ -7,6 +7,7 @@ module DiffusionDefinition
     const ℝ{N} = SVector{N,Float64}
 
     include("types.jl")
+    include("standard_functions.jl")
     include("state_space_restrictions.jl")
     include("diffusion_process.jl")
     include(joinpath("..", "examples", "example_list.jl"))

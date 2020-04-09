@@ -40,7 +40,7 @@ makedocs(;
     ],
     repo="https://github.com/JuliaDiffusionBayes/DiffusionDefinition.jl/blob/{commit}{path}#L{line}",
     sitename="DiffusionDefinition.jl",
-    authors="Marcin Mider",
+    authors="Sebastiano Grazzi, Frank van der Meulen, Marcin Mider, Moritz Schauer",
     assets=String[],
 )
 

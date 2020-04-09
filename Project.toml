@@ -1,6 +1,6 @@
 name = "DiffusionDefinition"
 uuid = "c126fcb9-5a08-4fee-b75a-97eb446288b0"
-authors = ["Marcin Mider"]
+authors = ["Sebastiano Grazzi", "Frank van der Meulen", "Marcin Mider", "Moritz Schauer"]
 version = "0.1.0"
 
 [deps]
