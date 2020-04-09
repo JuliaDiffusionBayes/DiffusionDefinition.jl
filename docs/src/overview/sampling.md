@@ -16,3 +16,7 @@ XX = trajectory(tt, DD.ℝ{3})
 P = Lorenz(28.0, 10.0, 8.0/3.0, 2.0)
 DD.solve!(XX, wiener_path, P, zero(DD.ℝ{3}))
 ```
+The two-step sampling recipe above can also be done at once by calling:
+```julia
+XX = rand(P, zero(DD.ℝ{3}), tt)
+```

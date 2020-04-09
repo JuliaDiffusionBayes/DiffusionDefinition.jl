@@ -12,8 +12,8 @@ _ENDPOINTINFO = [:aux_info, :auxiliary_info, :end_points, :end_point_info]
 _ENDPOINTEXTRA = [
     [:t0, :t_0],
     [:T],
-    [:v0, :obs0, :v_0, :obs_0],
-    [:vT, :obsT,  :v_T, :obs_T, ],
+    [:x0, :v0, :obs0, :v_0, :obs_0, :y0, :x_0, :y_0],
+    [:vT, :obsT,  :v_T, :obs_T],
     [:xT, :yT, :stateT, :x_T, :y_T, :state_T],
 ]
 _EXTRA = [:additional, :extra]
@@ -751,7 +751,7 @@ function createstruct(abstract_type, p)
 end
 
 function organize_extra_info(p)
-    extra_info_names = [:t0, :T, :v0, :vT, :xT]
+    extra_info_names = [:t0, :T, :x0, :vT, :xT]
     extra_info_vec = Any[]
     extra_info_used_names = Symbol[]
     if any([haskey(p.extras, eio) for eio in extra_info_names])

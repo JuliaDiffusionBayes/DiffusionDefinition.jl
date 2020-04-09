@@ -24,6 +24,7 @@ makedocs(;
             "Defining diffusions" => joinpath("overview", "defining_diffusions.md"),
             "Loading diffusions" => joinpath("overview", "load_diff.md"),
             "Sampling trajectories" => joinpath("overview", "sampling.md"),
+            "Convenience functions" => joinpath("overview", "convenience_functions.md"),
         ],
         "Examples" => Any[
             "Lotka-Volterra system" => joinpath("examples", "lotka_volterra.md"),
