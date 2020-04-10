@@ -53,6 +53,7 @@ DD = DiffusionDefinition
     @test eltype(P) == Float64
 
     @test DD.parameter_names(P) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
+    @test DD.parameter_names(typeof(P)) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
     @test DD.parameters(P) == param_tuple
     @test DD.end_point_info_names(P) == (:T, :vT, :xT)
     @test DD.end_point_info(P) == (end_point_info_tuple..., (@SVector [0.0, 0.0, 0.0]))

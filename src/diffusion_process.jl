@@ -369,19 +369,33 @@ function add_parameters_function!(fns, p)
 end
 
 function add_parameter_names_function!(fns, p)
-    fn_def = Expr(
+    fn_def1 = Expr(
         :call,
         :parameter_names,
-        Expr(:(::),
+        Expr(
+            :(::),
+            Expr(
+                :curly,
+                :Type,
+                p.name,
+            )
+        )
+    )
+    fn_def2 = Expr(
+        :call,
+        :parameter_names,
+        Expr(
+            :(::),
             :P,
-            p.name
+            p.name,
         )
     )
     fn_body = Expr(
         :tuple,
         [QuoteNode(x[1]) for x in p.parameters]...,
     )
-    push!(fns, Expr(:(=), fn_def, fn_body))
+    push!(fns, Expr(:(=), fn_def1, fn_body))
+    push!(fns, Expr(:(=), fn_def2, fn_body))
 end
 
 
