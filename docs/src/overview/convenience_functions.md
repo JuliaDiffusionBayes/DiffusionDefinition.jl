@@ -4,5 +4,5 @@ For each newly defined diffusion struct the package auto-generates some utility 
 - `param_names`
 - `parameters`
 - `clone`
-- `extra_info`
-- `extra_info_names`
+- `end_point_info`
+- `end_point_info_names`

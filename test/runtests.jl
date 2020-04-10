@@ -38,8 +38,8 @@ DD = DiffusionDefinition
 
     param_tuple = (1.0, 2.0, 3.0, 4.0, 5, 6, Int32(7), Int32(8),
                       Float32(9.0), Float32(10.0), 11.0, 12)
-    extra_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
-    P = TestDiffusion(param_tuple..., extra_info_tuple...)
+    end_point_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
+    P = TestDiffusion(param_tuple..., end_point_info_tuple...)
 
     @test DD.nonhypo(P, :x) == :x
     @testset "satisfying bounds" begin
@@ -54,8 +54,8 @@ DD = DiffusionDefinition
 
     @test DD.parameter_names(P) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
     @test DD.parameters(P) == param_tuple
-    @test DD.extra_info_names(P) == (:T, :vT, :xT)
-    @test DD.extra_info(P) == (extra_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
+    @test DD.end_point_info_names(P) == (:T, :vT, :xT)
+    @test DD.end_point_info(P) == (end_point_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
 
     @diffusion_process TestDiffusion2 begin
         :dimensions
@@ -72,16 +72,16 @@ DD = DiffusionDefinition
     end
 
     param_tuple = (1.0, 2.0, 3.0)
-    extra_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
+    end_point_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
 
-    P = TestDiffusion2(param_tuple..., extra_info_tuple...)
+    P = TestDiffusion2(param_tuple..., end_point_info_tuple...)
 
     @test DD.parameter_names(P) == (:p1, :p2, :p3)
     @test DD.parameters(P) == param_tuple
-    @test DD.extra_info_names(P) == (:T, :vT, :xT)
-    @test DD.extra_info(P) == (extra_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
+    @test DD.end_point_info_names(P) == (:T, :vT, :xT)
+    @test DD.end_point_info(P) == (end_point_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
 
-    P1 = TestDiffusion2(1.0, 1.0, 1.0, extra_info_tuple...)
+    P1 = TestDiffusion2(1.0, 1.0, 1.0, end_point_info_tuple...)
     P2 = TestDiffusion2(1.0, 1.0, 1.0, 1.0, (@SVector [1.0, 1.0, 1.0, 1.0]), (@SVector [1.0, 1.0, 1.0]))
 
     @test DD.update_params(P, [1.0, 1.0, 1.0]...) == P1

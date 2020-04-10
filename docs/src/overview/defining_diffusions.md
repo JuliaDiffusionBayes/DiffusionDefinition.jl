@@ -62,29 +62,30 @@ There are in fact more functions that are being defined, see [Convenience Functi
 
 ### More systematic explanations
 The following information can be specified when using `@diffusion_process`.
-#### `:dimensions`
+#### `:dimensions` (alternative, accepted names: `:dim`, `:dims`, `:dimension`)
 Specification of the dimension of the process and the dimension of the driving Brownian motion. Must be written in a format: `process --> dimension` OR `wiener --> dimension` (eg. `process --> 4`)
-#### `:parameters`
+#### `:parameters` (also accepts: `:param`, `:params`)
 List of all parameters that the law depends on. Must be in one of the following formats (anywhere, if the parameter-name is set to `_` then uses default names based on a letter `p`):
 - `single-parameter-name --> single-data-type` (eg. `σ --> Float64` or `σ --> T` (if `T` is a template argument) or `_ --> Vector{Int32}`). This defines a single parameter.
 - `single-parameter-name --> (multiple-data-types,)` (eg. `σ --> (Float64, Int64)`, `_ --> (Int32, T)`). This defines as many parameters as there are specified types and appends the names with numbers to disambiguate multiple parameters with the same names.
 - `single-parameter-name --> (number-of-parameters, data-type)` (eg. `σ --> (3, Float64)`) defines `number-of-parameters`-many parameters of the same data type.
 - `(multiple-parameter-names,) --> single-data-type` (eg. `(α, β, γ) --> Int64`) defines as many parameters as there are names specified and sets them to be of the same type.
 - `(multiple-parameter-names,) --> (multiple-data-types,)` (eg. `(α, β, γ) --> (Float64, Int64, T)`) defines as many parameters as there are names specified (there should be an equal number of names as there are types) and sets them to be of corresponding type.
-#### `:auxiliary_info`
+#### `:auxiliary_info` (also accepts: `:aux_info`, `:end_points`, `:end_point_info`)
 Information about the end-points of the diffusion. This is a useful feature for guided proposals or simulation of diffusion bridges, where the process is conditioned to hit certain end-point. The following fields can be defined:
-- `t0`: the starting time-point
+- `t0` (also accepts `:t_0`): the starting time-point
 - `T`: the final time-point
-- `x0`: the starting position
-- `vT`: the observation at the terminal time
-- `xT`: the state of the process at the terminal time
+- `x0` (also accepts `:y0`, `:state0`, `:x_0`, `:y_0`, `:state_0`): the starting position
+- `v0` (also accepts `:obs0`, `:v_0`, `:obs_0`): the starting observation
+- `vT` (also accepts `:obsT`, `:v_T`, `:obs_T`): the observation at the terminal time
+- `xT` (also accepts `:yT`, `:stateT`, `:x_T`, `:y_T`, `:state_T`): the state of the process at the terminal time
 Each one of these fields can be defined in a format `field-name --> field-type`, for instance `T --> Float64`. **IMPORTANT** If at least one of the fields above is defined, then the field `xT` will be defined automatically and the diffusion constructor will default `xT` to a zero vector (or SVector or a Number, it will make a reasonable guess, but it may be wrong). The reason for this is to make employment of a blocking technique in other packages a bit easier.
 #### `:conjugate`
 This is a section need to be present if conjugate Gaussian updates are to be made in the setting of Bayesian inference. Three pieces of information can be specified:
 - Function `phi`
 - Function `nonhypo` in a format `nonhypo(x) --> non-smooth-coordinates-of-x` which specifies which coordinates of `x` have non-degenerate noise on them.
 - `num_non_hypo` which specifies how many coordinates are with non-degenerate noise on them [TODO change to a simple count of `nonhypo` output length]
-#### `:additional`
+#### `:additional` (also accepts: `:extra`)
 The additional information provides some additional decorators that helps the compiler use specialised functions when called on instances of corresponding diffusion processes. The following paramters can be specified
 - `constdiff --> true` (or `false`) depending on whether the volatility coefficient is independent from the state variable (`false` by default)
 - `linear --> true` (or `false`) to indicate that a diffusion has a linear structure (`false` by default).

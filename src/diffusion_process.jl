@@ -12,7 +12,8 @@ _ENDPOINTINFO = [:aux_info, :auxiliary_info, :end_points, :end_point_info]
 _ENDPOINTEXTRA = [
     [:t0, :t_0],
     [:T],
-    [:x0, :v0, :obs0, :v_0, :obs_0, :y0, :x_0, :y_0],
+    [:x0, :y0, :state0, :x_0, :y_0, :state_0],
+    [:v0, :obs0, :v_0, :obs_0],
     [:vT, :obsT,  :v_T, :obs_T],
     [:xT, :yT, :stateT, :x_T, :y_T, :state_T],
 ]
@@ -158,9 +159,9 @@ function parse_process(name , ex::Expr, ::Any)
     #)
 
     add_constdiff_function!(p.fns, p)
-    add_extra_info_function!(p.fns, p)
+    add_end_point_info_function!(p.fns, p)
     add_parameters_function!(p.fns, p)
-    add_extra_info_names_function!(p.fns, p)
+    add_end_point_info_names_function!(p.fns, p)
     add_parameter_names_function!(p.fns, p)
 
     eval(struct_def)
@@ -398,23 +399,23 @@ format:
 """
 function parse_line!(::Val{:aux_info}, line, p)
     name = line.args[1]
-    for i in 1:5
+    for i in 1:6
         _symbol_in(name, _ENDPOINTEXTRA[i]) && (name = _ENDPOINTEXTRA[i][1])
     end
 
     p.extras[name] = line.args[2]
 end
 
-function add_extra_info_function!(fns, p)
+function add_end_point_info_function!(fns, p)
     fn_def = Expr(
         :call,
-        :extra_info,
+        :end_point_info,
         Expr(:(::),
             :P,
             p.name
         )
     )
-    _, used_names = organize_extra_info(p)
+    _, used_names = organize_end_point_info(p)
 
     fn_body = Expr(
         :tuple,
@@ -423,16 +424,16 @@ function add_extra_info_function!(fns, p)
     push!(fns, Expr(:(=), fn_def, fn_body))
 end
 
-function add_extra_info_names_function!(fns, p)
+function add_end_point_info_names_function!(fns, p)
     fn_def = Expr(
         :call,
-        :extra_info_names,
+        :end_point_info_names,
         Expr(:(::),
             :P,
             p.name
         )
     )
-    _, used_names = organize_extra_info(p)
+    _, used_names = organize_end_point_info(p)
 
     fn_body = Expr(
         :tuple,
@@ -683,7 +684,7 @@ function createstruct(abstract_type, p)
     param_vec = map(p.parameters) do (name, data_type, _, _)
         Expr(:(::), name, data_type)
     end
-    extra_info_vec, extra_info_used_names = organize_extra_info(p)
+    end_point_info_vec, end_point_info_used_names = organize_end_point_info(p)
 
     _new = (
         p.template_args == Any[] ?
@@ -695,12 +696,12 @@ function createstruct(abstract_type, p)
         :call,
         p.name,
         param_vec...,
-        extra_info_vec[1:end-1]...,
+        end_point_info_vec[1:end-1]...,
         (
-            length(extra_info_vec)>0 ?
+            length(end_point_info_vec)>0 ?
             [
                 Expr(:kw,
-                    extra_info_vec[end],
+                    end_point_info_vec[end],
                     Expr(
                         :call,
                         Expr(
@@ -709,7 +710,7 @@ function createstruct(abstract_type, p)
                             :(:custom_zero),
                         ),
                         p.dims[_PROCESS[1]],
-                        extra_info_vec[end].args[2],
+                        end_point_info_vec[end].args[2],
                     ),
                 )
             ] :
@@ -734,31 +735,31 @@ function createstruct(abstract_type, p)
         ), # first line defining the struct
         Expr(:block,
             param_vec..., # parameters
-            extra_info_vec..., # extra info about end-points
+            end_point_info_vec..., # extra info about end-points
             Expr(:function, # constructor
                 constructor_def,
                 Expr(:block,
                     Expr(:call,
                         _new,
                         map(x->x[1], p.parameters)...,
-                        extra_info_used_names...,
+                        end_point_info_used_names...,
                     ),
                 ), # body of the constructor
             ), # constructor
         ), # body defining the struct
     )
-    struct_def#, Expr(:block, param_vec..., extra_info_vec...,), constructor_def
+    struct_def#, Expr(:block, param_vec..., end_point_info_vec...,), constructor_def
 end
 
-function organize_extra_info(p)
-    extra_info_names = [:t0, :T, :x0, :vT, :xT]
-    extra_info_vec = Any[]
-    extra_info_used_names = Symbol[]
-    if any([haskey(p.extras, eio) for eio in extra_info_names])
-        for name in [:t0, :T, :v0, :vT]
+function organize_end_point_info(p)
+    end_point_info_names = [:t0, :T, :v0, :x0, :vT, :xT]
+    end_point_info_vec = Any[]
+    end_point_info_used_names = Symbol[]
+    if any([haskey(p.extras, eio) for eio in end_point_info_names])
+        for name in [:t0, :T, :v0, :x0, :vT]
             haskey(p.extras, name) && (
-                push!(extra_info_vec, Expr(:(::), name, p.extras[name]));
-                push!(extra_info_used_names, name)
+                push!(end_point_info_vec, Expr(:(::), name, p.extras[name]));
+                push!(end_point_info_used_names, name)
             )
         end
         # the space for the exact end-point must always be there due to blocking
@@ -767,12 +768,12 @@ function organize_extra_info(p)
             p.dims[_PROCESS[1]], # dim of the process
         )
         push!(
-            extra_info_vec,
+            end_point_info_vec,
             Expr(:(::), :xT, get(p.extras, :xT, default_datatype))
         )
-        push!(extra_info_used_names, :xT)
+        push!(end_point_info_used_names, :xT)
     end
-    extra_info_vec, extra_info_used_names
+    end_point_info_vec, end_point_info_used_names
 end
 
 

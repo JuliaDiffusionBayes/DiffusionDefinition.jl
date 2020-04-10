@@ -56,7 +56,7 @@ _σ!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = σ!(buffer, t, x, P)
 clone(P::T, args...) where T<:DiffusionProcess = T(args...)
 
 function update_params(P::T, new_params...) where T<:DiffusionProcess
-    ei = extra_info(P)
+    ei = end_point_info(P)
     ei === nothing ? T(new_params...) : T(new_params..., ei...)
 end
 
