@@ -23,6 +23,10 @@ Return the state space restrictions.
 state_space(::DiffusionProcess{T,DP,DW,SS}) where {T,DP,DW,SS} = SS
 
 
+#TODO change this !!!
+default_type(::DiffusionProcess{T,DP}) where {T,DP} = SVector{DP,T}
+default_wiener_type(::DiffusionProcess{T,DP,DW}) where {T,DP,DW} = SVector{DW,T}
+
 a(t, x, P::DiffusionProcess) = σ(t, x, P) * σ(t, x, P)'
 
 
@@ -63,3 +67,10 @@ end
 
 custom_zero(D::Integer, ::Type{K}) where K <: Array = zeros(eltype(K), D)
 custom_zero(D::Integer, ::Type{K}) where K = zero(K)
+
+"""
+    parameter_names
+
+Return names of the parameters of a given object
+"""
+function parameter_names end

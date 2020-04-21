@@ -33,6 +33,7 @@ struct Wiener{D}
     Wiener{D}() where D = new{D}()
     Wiener(D::Integer) = new{D}()
     Wiener() = new{false}()
+    Wiener(::DiffusionProcess{T,TP,TW}) where {T,TP,TW} = new{TW}()
 end
 wiener() = Wiener()
 
@@ -71,6 +72,38 @@ function Trajectories.trajectory(tt, v::Type)
 end
 Trajectories.trajectory(tt, v::Type, D, ::Val{true}) = trajectory(tt, v, D)
 Trajectories.trajectory(tt, v::Type, D, ::Val{false}) = trajectory(tt, v)
+
+function Trajectories.trajectory(
+        tt::AbstractArray{<:AbstractArray},
+        P::DiffusionProcess,
+        v::Type=default_type(P),
+        w::Type=default_wiener_type(P),
+    )
+    (
+        process = [_process_traj(t, P, v) for t in tt],
+        wiener = [_wiener_traj(t, P, w) for t in tt],
+    )
+end
+
+function Trajectories.trajectory(
+        tt,
+        P::DiffusionProcess,
+        v::Type=default_type(P),
+        w::Type=default_wiener_type(P)
+    )
+    (
+        process = _process_traj(tt, P, v),
+        wiener = _wiener_traj(tt, P, w)
+    )
+end
+
+function _process_traj(tt, ::DiffusionProcess{T,DP}, v::Type) where {T,DP}
+    trajectory(tt, v, eval(DP))
+end
+
+function _wiener_traj(tt, ::DiffusionProcess{T,DP,DW}, v::Type) where {T,DP,DW}
+    trajectory(tt, v, eval(DW))
+end
 
 """
     Random.rand!(
