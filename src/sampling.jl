@@ -22,112 +22,59 @@ future.
 struct EulerMaruyama <: AbstractSDESolver end
 
 """
-    struct Wiener{D}
+    struct Wiener{D,Tdevice}
     end
 
 A struct defining the Wiener process. `D` indicates the dimension of the process
 if it cannot be inferred from the DataType of the Trajectory. If the dimension
 can be inferred then it takes precedence over the value of `D`.
 """
-struct Wiener{D}
-    Wiener{D}() where D = new{D}()
-    Wiener(D::Integer) = new{D}()
-    Wiener() = new{false}()
-    Wiener(::DiffusionProcess{T,TP,TW}) where {T,TP,TW} = new{TW}()
+struct Wiener{D,Tdevice}
+    Wiener{D,Tdevice}() where {D,Tdevice} = new{D,Tdevice}()
+    Wiener{D}() where D = new{D,:unspec}()
+    Wiener(D::Integer=false, device::Symbol=:unspec) = new{D,device}()
+    function Wiener(
+            ::DiffusionProcess{T,TP,TW},
+            device::Symbol=:unspec
+        ) where {T,TP,TW}
+        new{TW,device}()
+    end
 end
-wiener() = Wiener()
+wiener(args...) = Wiener(args...)
 
 ismutable(el) = ismutable(typeof(el))
-ismutable(::Type) = Val(false)
-ismutable(::Type{<:Array}) = Val(true)
+ismutable(::Type) = Val(true)
+ismutable(::Type{K}) where K<:Union{Number,SArray} = Val(false)
+ismutable(::Trajectory{T,Vector{K}}) where {T,K} = ismutable(K)
 
+Base.zero(w::Wiener{D}) where D = zero(SVector{D,Float64})
+
+#===============================================================================
+                        Sampling Wiener processes
+===============================================================================#
 """
-    Base.zero(K::Type, D, ::Val)
+    Base.rand(w::Wiener, tt, y1)
 
-If `K` is a mutable type, then create `zeros` of dimension `D` and entries with
-types `eltype(K)`. Otherwise, calls regular zero(`K`).
+Samples Wiener process on `tt`, started from `y1` and returns a new object with
+a sampled trajectory.
 """
-Base.zero
+Base.rand(w::Wiener, tt, y1=zero(w)) = rand(Random.GLOBAL_RNG, w, tt, y1)
 
-Base.zero(K::Type, D, ::Val{true}) = zeros(eltype(K), D)
-Base.zero(K::Type, D, ::Val{false}) = zero(K)
-
-"""
-    Trajectories.trajectory(tt, v::Type, D::Number)
-
-Create a Trajectory with mutable states of dimension `D` along the time
-collection `tt`.
-"""
-function Trajectories.trajectory(tt, v::Type, D::Number)
-    trajectory(collect(tt), [zeros(eltype(v),D) for _ in tt])
-end
-
-"""
-    Trajectories.trajectory(tt, v::Type)
-
-Create a Trajectory with immutable states along the time collection `tt`.
-"""
-function Trajectories.trajectory(tt, v::Type)
-    trajectory(collect(tt), zeros(v, length(tt)))
-end
-Trajectories.trajectory(tt, v::Type, D, ::Val{true}) = trajectory(tt, v, D)
-Trajectories.trajectory(tt, v::Type, D, ::Val{false}) = trajectory(tt, v)
-
-function Trajectories.trajectory(
-        tt::AbstractArray{<:AbstractArray},
-        P::DiffusionProcess,
-        v::Type=default_type(P),
-        w::Type=default_wiener_type(P),
-    )
-    (
-        process = [_process_traj(t, P, v) for t in tt],
-        wiener = [_wiener_traj(t, P, w) for t in tt],
-    )
-end
-
-function Trajectories.trajectory(
+function Base.rand(
+        rng::Random.AbstractRNG,
+        w::Wiener{D},
         tt,
-        P::DiffusionProcess,
-        v::Type=default_type(P),
-        w::Type=default_wiener_type(P)
-    )
-    (
-        process = _process_traj(tt, P, v),
-        wiener = _wiener_traj(tt, P, w)
-    )
-end
-
-function _process_traj(tt, ::DiffusionProcess{T,DP}, v::Type) where {T,DP}
-    trajectory(tt, v, eval(DP))
-end
-
-function _wiener_traj(tt, ::DiffusionProcess{T,DP,DW}, v::Type) where {T,DP,DW}
-    trajectory(tt, v, eval(DW))
-end
-
-"""
-    Random.rand!(
-        path::Trajectory{T,Vector{K}},
-        w::Wiener{D},
-        y1=zero(K,D,ismutable(K))
-    ) where {T,K,D}
-
-Samples Wiener process started from `y1` and saves the data in `path`. Uses
-a default random number generator.
-"""
-function Random.rand!(
-        path::Trajectory{T,Vector{K}},
-        w::Wiener{D},
-        y1=zero(K, D, ismutable(K))
-    ) where {T,K,D}
-    rand!(Random.GLOBAL_RNG, path, w, y1)
+        y1::K=zero(w),
+    ) where {D,K}
+    path = trajectory(tt, K, D, ismutable(K))
+    rand!(rng, w, path, y1)
 end
 
 """
     Random.rand!(
         rng::Random.AbstractRNG,
-        path::Trajectory{T,Vector{K}},
         ::Wiener,
+        path::Trajectory{T,Vector{K}},
         y1=zero(K)
     ) where {T,K}
 
@@ -136,11 +83,12 @@ data in `path`. `rng` is used as a random number generator.
 """
 function Random.rand!(
         rng::Random.AbstractRNG,
-        path::Trajectory{T,Vector{K}},
         ::Wiener,
+        path::Trajectory{T,<:Vector{K}},
         y1=zero(K)
     ) where {T,K}
-    yy, tt = path.x, path.t
+    tt, yy = path.t, path.x
+
     N = length(path)
     yy[1] = y1
     for i in 2:N
@@ -153,8 +101,8 @@ end
 """
     Random.rand!(
         rng::Random.AbstractRNG,
-        path::Trajectory{T,Vector{Vector{K}}},
         ::Wiener{D},
+        path::Trajectory{T,Vector{Vector{K}}},
         y1=zeros(K,D)
     ) where {K,T,D}
 
@@ -163,8 +111,8 @@ in `path`. `rng` is used as a random number generator.
 """
 function Random.rand!(
         rng::Random.AbstractRNG,
-        path::Trajectory{T,Vector{Vector{K}}},
         ::Wiener{D},
+        path::Trajectory{T,<:Vector{<:Array{K}}},
         y1=zeros(K,D)
     ) where {K,T,D}
     yy, tt = path.x, path.t
@@ -172,7 +120,7 @@ function Random.rand!(
     yy[1] = y1
     for i in 2:N
         rootdt = sqrt(tt[i] - tt[i-1])
-        for j in 1:D
+        for j in eachindex(yy[i])
             yy[i][j] = yy[i-1][j] + rootdt*randn(rng, K)
         end
     end
@@ -180,22 +128,30 @@ function Random.rand!(
 end
 
 """
-    Base.rand(tt, w::Wiener, y1)
-
-Samples Wiener process on `tt`, started from `y1` and returns a new object with
-a sampled trajectory.
-"""
-Base.rand(w::Wiener, y1, tt) = rand(Random.GLOBAL_RNG, w, y1, tt)
-
-function Base.rand(
-        rng::Random.AbstractRNG,
+    Random.rand!(
         w::Wiener{D},
-        y1::K,
-        tt,
-    ) where {D,K}
-    path = trajectory(tt, K, D, ismutable(K))
-    rand!(rng, path, w, y1)
+        path::Trajectory{T,Vector{K}},
+        y1=zero(K,D,ismutable(K))
+    ) where {T,K,D}
+
+Samples Wiener process started from `y1` and saves the data in `path`. Uses
+a default random number generator.
+"""
+function Random.rand!(
+        w::Wiener{D},
+        path::Trajectory{T,Vector{K}},
+        y1=zero(K, D, ismutable(K))
+    ) where {T,K,D}
+    rand!(Random.GLOBAL_RNG, w, path, y1)
 end
+
+#===============================================================================
+                    Euler-Maruyama scheme for solving SDEs
+===============================================================================#
+
+# needed for ForwardDiff
+value(x) = x
+value!(y, x) = (y.= x)
 
 """
     solve!(XX, WW, P, y1)
@@ -205,7 +161,7 @@ from the sampled Wiener process `WW`. Save the sampled path in `XX`. Return
 prematurely with a `false` massage if the numerical scheme has led to the solver
 violating the state-space restrictions.
 """
-solve!(XX, WW, P, y1) = solve!(EulerMaruyama(), XX, WW, P, y1)
+solve!(XX, WW, P, y1) = solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1)
 
 """
     solve!(XX, WW, P, y1, buffer)
@@ -213,105 +169,124 @@ solve!(XX, WW, P, y1) = solve!(EulerMaruyama(), XX, WW, P, y1)
 Same as `solve!(XX, WW, P, y1)`, but additionally provides a pre-allocated
 buffer for performing in-place computations.
 """
-solve!(XX, WW, P, y1, buffer) = solve!(EulerMaruyama(), XX, WW, P, y1, buffer)
+function solve!(XX, WW, P, y1, buffer)
+    solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1, buffer)
+end
 
-function solve!(
-        ::EulerMaruyama,
-        XX::Trajectory{T,Vector{KX}},
-        WW::Trajectory{T,Vector{KW}},
-        P,
-        y1::KX,
-    ) where {KX,KW,T}
+function solve!(::EulerMaruyama, ::Val{false}, XX, WW, P, y1::Ky1) where Ky1
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
 
-    yy[1] = y1
+    yy[1] = value(y1)
+    y = y1 # more appropriate name
     for i in 2:N
         dt = tt[i] - tt[i-1]
         dW = ww[i] - ww[i-1]
-        yy[i] = yy[i-1] + _b((tt[i-1], i-1), yy[i-1], P)*dt + _σ((tt[i-1], i-1), yy[i-1], P)*dW
-        bound_satisfied(P, yy[i]) || return false
+        y = y + _b((tt[i-1], i-1), y, P)*dt + _σ((tt[i-1], i-1), y, P)*dW
+        yy[i] = value(y) # strip duals
+        bound_satisfied(P, yy[i]) || return false, nothing
     end
-    true
+    true, y
 end
 
 function solve!(
-        ::EulerMaruyama,
-        XX::Trajectory{T,Vector{Vector{K}}},
-        WW::Trajectory{T,Vector{Vector{K}}},
-        P,
-        y1::Vector{K},
-        buffer=StandardEulerBuffer{K}(dimension(P)...)
-    ) where {K,T}
+        ::EulerMaruyama, ::Val{true}, XX, WW, P, y1::K,
+        buffer=StandardEulerBuffer{K}(P)
+    ) where K
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
-    dim_proc, dim_wiener = dimension(P)
 
-    yy[1] = y1
-    dt = tt[2] - tt[1]
-    y = yy[1]
+    value!(yy[1], y1)
+    y::K = y1 # name alias
 
     for i in 2:N
         dt = tt[i] - tt[i-1]
-        y = yy[i-1]
+
         _b!(buffer, (tt[i-1], i-1), y, P)
         _σ!(buffer, (tt[i-1], i-1), y, P)
-        for j in 1:dim_wiener
-            buffer.dW[j] = ww[i][j] - ww[i-1][j]
-        end
-        mul!(yy[i], buffer.σ, buffer.dW)
-        for j in 1:dim_proc
-            yy[i][j] += y[j] + buffer.b[j]*dt
-        end
-        bound_satisfied(P, yy[i]) || return false
+
+        buffer.dW .= ww[i] .- ww[i-1]
+        mul!(buffer.y, buffer.σ, buffer.dW)
+        y .= y .+ buffer.y .+ buffer.b .* dt
+
+        value!(yy[i], y) # strip duals
+        bound_satisfied(P, yy[i]) || return false, nothing
     end
-    true
+    true, y
 end
 
-Base.rand(P::DiffusionProcess, y1, tt) = rand(Random.GLOBAL_RNG, P, y1, tt, ismutable(y1))
+
+#=
+function solve!(
+        ::EulerMaruyama, ::Val{true}, XX, WW, P, y1::K,
+        buffer=StandardEulerBuffer{K}(P)
+    ) where K
+    yy, ww, tt = XX.x, WW.x, XX.t
+    N = length(XX)
+
+    value!(yy[1], y1)
+    y = y1 # name alias
+    y_temp = get_y(buffer)
+    b_temp = get_b(buffer)
+    σ_temp = get_σ(buffer)
+    dW = get_dW(buffer)
+
+    for i in 2:N
+        dt = tt[i] - tt[i-1]
+
+        _b!(buffer, (tt[i-1], i-1), y, P)
+        _σ!(buffer, (tt[i-1], i-1), y, P)
+
+        dW .= ww[i] .- ww[i-1]
+        mul!(y_temp, σ_temp, dW)
+        y .+= y_temp .+ b_temp .* dt
+
+        value!(yy[i], y) # strip duals
+        bound_satisfied(P, yy[i]) || return false, nothing
+    end
+    true, y
+end
+=#
+
+#===============================================================================
+        Sampling Diffusion processes using the Euler Maruyama scheme
+===============================================================================#
+
+function Base.rand(P::DiffusionProcess, tt, y1=zero(P))
+    rand(Random.GLOBAL_RNG, P, tt, y1, ismutable(y1))
+end
 
 function Base.rand(
         rng::Random.AbstractRNG,
         P::DiffusionProcess{T,DP,DW},
-        y1::K,
         tt,
+        y1::K,
         v::Val{true}
     ) where {T,DP,DW,K}
-    WW = rand(rng, Wiener{DW}(), zeros(eltype(y1), DW), tt)
+    WW = rand(rng, Wiener{DW}(), tt, zeros(eltype(y1), DW))
     XX = trajectory(tt, K, DP, v)
-    success = false
-    buffer = StandardEulerBuffer{eltype(K)}(dimension(P)...)
+    success, end_pt = false, nothing
+    buffer = StandardEulerBuffer{K}(P)
     while !success
-        success = solve!(XX, WW, P, y1, buffer)
+        success, end_pt = solve!(XX, WW, P, y1, buffer)
     end
-    XX
+    XX, end_pt
 end
+
+StaticArrays.similar_type(::Type{K}, s::Size) where K <: Number = SVector{s[1],K}
 
 function Base.rand(
         rng::Random.AbstractRNG,
         P::DiffusionProcess{T,DP,DW},
-        y1::K,
         tt,
+        y1::K,
         v::Val{false}
     ) where {T,DP,DW,K}
-    WW = rand(rng, Wiener(), _zero(y1, Val(DW)), tt)
+    WW = rand(rng, Wiener(), tt, zero(similar_type(K, Size(DW))))
     XX = trajectory(tt, K, DP, v)
-    success = false
+    success, end_pt = false, nothing
     while !success
-        success = solve!(XX, WW, P, y1)
+        success, end_pt = solve!(XX, WW, P, y1)
     end
-    XX
-end
-
-
-function _zero(x::K, ::Val{D}) where {K,D}
-    (
-        K <: Number ?
-        zero(K) :
-        (
-            K <: SArray ?
-            zero(SVector{D}) :
-            error("other immutable types not implemented")
-        )
-    )
+    XX, end_pt
 end

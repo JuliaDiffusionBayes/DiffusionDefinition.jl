@@ -28,11 +28,33 @@ _CONSTDIFF = [
     :constvolatility,
     :constantdiff,
     :constantvola,
+    :constσ,
+]
+_DIAGONALDIFF = [
+    :diagonaldiff,
+    :diagonalvola,
+    :diagonaldiffusivity,
+    :diagonalvolatility,
+    :diagonaldiff,
+    :diagonalvola,
+    :diagonalσ,
+]
+_SPARSEDIFF = [
+    :sparsediff,
+    :sparsevola,
+    :sparsediffusivity,
+    :sparsevolatility,
+    :sparsediff,
+    :sparsevola,
+    :sparseσ,
 ]
 _LINEAR = [:linear, :lineardiffusion]
 _ELTYPE = [:eltype]
 _NUMNONHYPO = [:num_non_hypo, :numnonhypo]
 _PHI = [:phi, :ϕ, :φ]
+
+_TEMP_DIMENSION_PROCESS = -1
+_TEMP_DIMENSION_WIENER = -1
 
 """
     Base.lowercase(s::Symbol)
@@ -95,6 +117,12 @@ end
 Loads the predefined diffusion process.
 """
 macro load_diffusion(name)
+    found_me, importname = _load_diffusion(name)
+    found_me && return Meta.parse("import DiffusionDefinition.$importname")
+    nothing
+end
+
+function _load_diffusion(name)
     if _symbol_in(name, _ADMISSIBLENAMES)
         if typeof(name) <: QuoteNode
             name = eval(name)
@@ -106,10 +134,21 @@ macro load_diffusion(name)
         isfile(path) && include(path)
         !isfile(path) && println("Error, diffusion $name is supposed to be ",
                                 "defined but it seems the file does not exist")
-        return Meta.parse("import DiffusionDefinition.$importname")
-    else
-        println("Diffusion $name does not seem to be defined...")
+        return true, importname
     end
+    println("Diffusion $name does not seem to be defined...")
+    false, nothing
+end
+
+macro load_variable_diffusion(name, dim_proc, args...)
+    global _TEMP_DIMENSION_PROCESS = eval(dim_proc)
+    global _TEMP_DIMENSION_WIENER = (
+        length(args) > 0 ?
+        eval(args[1]) :
+        _TEMP_DIMENSION_PROCESS
+    )
+    found_me, importname = _load_diffusion(name)
+    found_me && return Meta.parse("import DiffusionDefinition.$importname")
     nothing
 end
 
@@ -158,7 +197,7 @@ function parse_process(name , ex::Expr, ::Any)
     #    struct_def,
     #)
 
-    add_constdiff_function!(p.fns, p)
+    add_diff_function!(p.fns, p)
     add_end_point_info_function!(p.fns, p)
     add_parameters_function!(p.fns, p)
     add_end_point_info_names_function!(p.fns, p)
@@ -579,6 +618,8 @@ function parse_line!(::Val{:additional}, line, p)
     name = line.args[1]
     _symbol_in(name, _STATESPACE) && (name = _STATESPACE[1])
     _symbol_in(name, _CONSTDIFF) && (name = _CONSTDIFF[1])
+    _symbol_in(name, _SPARSEDIFF) && (name = _SPARSEDIFF[1])
+    _symbol_in(name, _DIAGONALDIFF) && (name = _DIAGONALDIFF[1])
     _symbol_in(name, _LINEAR) && (name = _LINEAR[1])
     _symbol_in(name, _ELTYPE) && (name = _ELTYPE[1])
 
@@ -586,20 +627,27 @@ function parse_line!(::Val{:additional}, line, p)
 end
 
 """
-    add_constdiff_function!(fns, p)
+    add_diff_function!(fns, p)
 
 Add a definition of a function `consdiff` that indicates if the diffusion
 coefficient is constant
 """
-function add_constdiff_function!(fns, p)
-    fn_def = Expr(:call,
-        :constdiff,
-        Expr(:(::),
-            :P,
-            p.name
+function add_diff_function!(fns, p)
+    to_add = [
+        (:constdiff, _CONSTDIFF[1]),
+        (:sparsediff, _SPARSEDIFF[1]),
+        (:diagonaldiff, _DIAGONALDIFF[1])
+    ]
+    for (name, _NAME) in to_add
+        fn_def = Expr(:call,
+            name,
+            Expr(:(::),
+                :P,
+                p.name
+            )
         )
-    )
-    push!(fns, Expr(:(=), fn_def, p.extras[_CONSTDIFF[1]]))
+        push!(fns, Expr(:(=), fn_def, p.extras[_NAME]))
+    end
 end
 
 #------------------------------------------------------------------------------#
@@ -616,8 +664,8 @@ Brownian motion.
 """
 function parse_line!(::Val{:dimensions}, line, p)
     dim_of_what, dim = line.args[1], line.args[2]
-    _symbol_in(dim_of_what, _WIENER) && (p.dims[_WIENER[1]] = dim)
-    _symbol_in(dim_of_what, _PROCESS) && (p.dims[_PROCESS[1]] = dim)
+    _symbol_in(dim_of_what, _WIENER) && (p.dims[_WIENER[1]] = eval(dim))
+    _symbol_in(dim_of_what, _PROCESS) && (p.dims[_PROCESS[1]] = eval(dim))
 end
 
 #------------------------------------------------------------------------------#
@@ -659,6 +707,8 @@ function fill_unspecified_with_defaults(::Val{:additional}, p)
     defaults = [
         (_STATESPACE[1], UnboundedStateSpace()),
         (_CONSTDIFF[1], false),
+        (_SPARSEDIFF[1], false),
+        (_DIAGONALDIFF[1], false),
         (_LINEAR[1], false),
         (_ELTYPE[1], Float64),
         (_NUMNONHYPO[1], (
@@ -718,13 +768,18 @@ function createstruct(abstract_type, p)
                     end_point_info_vec[end],
                     Expr(
                         :call,
-                        Expr(
-                            :.,
-                            :DiffusionDefinition,
-                            :(:custom_zero),
-                        ),
-                        p.dims[_PROCESS[1]],
+                        :zero,
                         end_point_info_vec[end].args[2],
+                        p.dims[_PROCESS[1]],
+                        Expr(
+                            :call,
+                            Expr(
+                                :.,
+                                :DiffusionDefinition,
+                                :(:ismutable),
+                            ),
+                            end_point_info_vec[end].args[2],
+                        )
                     ),
                 )
             ] :
