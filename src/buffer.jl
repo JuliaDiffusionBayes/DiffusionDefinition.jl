@@ -16,7 +16,7 @@ and it CAN:
 """
 abstract type AbstractBuffer{T} <: AbstractArray{T,1} end
 
-const _AB{T} = AbstractBuffer{T} where T # an alias
+const _AB{T} = AbstractBuffer{T} where T # alias
 
 Base.size(var::_AB) = size(var.data)
 Base.eltype(var::_AB{T}) where T = T
@@ -72,39 +72,16 @@ dimensions required for constructing the internal views of the data.
 """
 dimensions(::Type{K}) where K<:_AB = get_curly(K)[2].args
 
-
-
-@generated function Base.similar(::K) where K<:_AB{T} where T
-    pure_name = Meta.parse(string((remove_curly(K))))
-    constructor = Expr(
-        :call,
-        Expr(
-            :curly,
-            :($pure_name),
-            T,
-        )
-    )
-    append!(constructor.args, [dimensions(K)...])
-    :(
-        $constructor
-    )
+Base.similar(d::K) where K <: _AB = begin
+    new_data = similar(d.data)
+    K(new_data, new_data.x...)
+end
+# the one below is likely wrong, but it's also not used atm, come back later
+Base.similar(d::K, ::Type{T}) where {K <: _AB,T} = begin
+    new_data = similar(d.data, T)
+    K(new_data, new_data.x...)
 end
 
-@generated function Base.similar(::K, ::Type{T}) where {K<:_AB,T}
-    pure_name = Meta.parse(string((remove_curly(K))))
-    constructor = Expr(
-        :call,
-        Expr(
-            :curly,
-            :($pure_name),
-            T,
-        )
-    )
-    append!(constructor.args, [dimensions(K)...])
-    :(
-        $constructor
-    )
-end
 
 """
     struct StandardEulerBuffer{T,D,Tb,Tσ,Tdw} <: AbstractBuffer{T}
@@ -119,21 +96,59 @@ Standard buffer for the Euler-Maruyama simulations. The data is stored in
 corresponding segments of `data`. `T` is the DataType of each data element
 and `D` are dimensions needed to create the views.
 """
-struct StandardEulerBuffer{T,D,Tb,Tσ,Tdw} <: AbstractBuffer{T}
-    data::Vector{T}
+struct StandardEulerBuffer{T,TD,Tb,Tσ,Tdw} <: AbstractBuffer{T}
+    data::TD
     b::Tb
+    y::Tb
     σ::Tσ
     dW::Tdw
+end
 
-    function StandardEulerBuffer{T}(dim_process::Number, dim_wiener::Number) where T
-        D, m = dim_process, dim_wiener
-        data = zeros(T, D + D*m + m)
+function StandardEulerBuffer(b::Tb, σ::Tσ, dW::Tdw) where {Tb, Tσ, Tdw}
+    y = deepcopy(b)
+    data = ArrayPartition(b, y, σ, dW)
+    T, TD = eltype(y), typeof(data)
+    StandardEulerBuffer{T, TD, Tb, Tσ, Tdw}(data, b, y, σ, dW)
+end
 
-        b = view(data, 1:D)
-        σ = reshape( view(data, (D+1):(D+D*m)), (D,m) )
-        dW = view(data, (D+D*m+1):(D+D*m+m))
-        new{T,(D,m),typeof(b),typeof(σ),typeof(dW)}(data, b, σ, dW)
-    end
+function StandardEulerBuffer{K}(P::DiffusionProcess{T,DP,DW}) where {K,T,DP,DW}
+    # dW always falls on defaults or not?
+    dW = zero(K, DW, ismutable(K)) # zero(P, Val(:wiener))
+    b = zero(K, DP, ismutable(K))
+    σ = _init_mat_for_buffer(
+        Val(diagonaldiff(P)),
+        Val(sparsediff(P)),
+        K,
+        tuple(dimension(P)...)
+    )
+    StandardEulerBuffer(b, σ, dW)
+end
+
+function _init_mat_for_buffer(
+        ::Val{false}, # diagonal
+        ::Val{false}, # sparse
+        ::Type{K}, # eltype
+        dims
+    ) where K
+    zeros(eltype(K), dims)
+end
+
+function _init_mat_for_buffer(
+        ::Val{true}, # diagonal
+        ::Any, # sparse
+        ::Type{K}, # eltype
+        dims
+    ) where K
+    Diagonal{eltype(K)}(zeros(eltype(K), dims[1]))
+end
+
+function _init_mat_for_buffer(
+        ::Val{false}, # diagonal
+        ::Val{true}, # sparse
+        ::Type{K}, # eltype
+        dims
+    ) where K
+    spzeros(eltype(K), dims...)
 end
 
 """
@@ -149,21 +164,36 @@ A buffer for Euler-Maruyama simulations of linear diffusions. Almost the same
 as `StandardEulerBuffer`, but contains additional space for an intermediate
 construction of a matrix `B` (and a corrsponding view).
 """
-struct LinearDiffBuffer{T,D,Tb,TB,Tσ,Tdw} <: AbstractBuffer{T}
-    data::Vector{T}
+struct LinearDiffBuffer{T,TD,Tb,Tσ,Tdw,TB} <: AbstractBuffer{T}
+    data::TD
     b::Tb
-    B::TB
+    y::Tb
     σ::Tσ
     dW::Tdw
+    B::TB
+end
 
-    function LinearDiffBuffer{T}(dim_process::Number, dim_wiener::Number) where T
-        D, m = dim_process, dim_wiener
-        data = zeros(T, D + D*D + D*m + m)
+function LinearDiffBuffer(b::Tb, σ::Tσ, dW::Tdw, B::TB) where {Tb, Tσ, Tdw, TB}
+    y = deepcopy(b)
+    data = ArrayPartition(b, y, σ, dW, B)
+    T, TD = eltype(y), typeof(data)
+    LinearDiffBuffer{T, TD, Tb, Tσ, Tdw, TB}(data, b, y, σ, dW, B)
+end
 
-        b = view(data, 1:D)
-        B = reshape( view(data, (D+1):(D+D*D)), (D,D) )
-        σ = reshape( view(data, (D+D*D+1):(D+D*D+D*m)), (D,m) )
-        dW = view(data, (D+D*D+D*m+1):(D+D*D+D*m+m))
-        new{T,(D,m),typeof(b),typeof(B),typeof(σ),typeof(dW)}(data, b, B, σ, dW)
-    end
+function LinearDiffBuffer{K}(P::LinearDiffusion{T,DP,DW}) where {K,T,DP,DW}
+    dW = zero(K, DW, ismutable(K))
+    b = zero(K, DP, ismutable(K))
+    σ = _init_mat_for_buffer(
+        Val(diagonaldiff(P)),
+        Val(sparsediff(P)),
+        K,
+        tuple(dimension(P)...)
+    )
+    B = _init_mat_for_buffer(
+        Val(diagonalBmat(P)),
+        Val(sparseBmat(P)),
+        K,
+        (dim_process(P), dim_process(P))
+    )
+    LinearDiffBuffer(b, σ, dW, B)
 end

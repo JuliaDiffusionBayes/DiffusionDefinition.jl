@@ -9,6 +9,7 @@
 
     :additional
     constdiff --> true
+    sparsediff --> true
 end
 
 function b(t, x, P::Lorenz)
