@@ -7,6 +7,12 @@
 # define some names for the document
 _DIMENSIONS = [:dimensions, :dim, :dims, :dimension]
 _PARAMETERS = [:parameters, :param, :params]
+_CONSTPARAMETERS = [
+    :const_parameters, :const_param, :const_params,
+    :constparameters, :constparam, :constparams,
+    :constant_parameters, :constant_param, :constant_params,
+    :constantparameters, :constantparam, :constantparams
+]
 _CONJUGATE = [:conjugate]
 _ENDPOINTINFO = [:aux_info, :auxiliary_info, :end_points, :end_point_info]
 _ENDPOINTEXTRA = [
@@ -26,27 +32,41 @@ _CONSTDIFF = [
     :constvola,
     :constdiffusivity,
     :constvolatility,
+    :constσ,
     :constantdiff,
     :constantvola,
-    :constσ,
+    :constantdiffusivity,
+    :constantvolatility,
+    :constantσ,
 ]
 _DIAGONALDIFF = [
     :diagonaldiff,
     :diagonalvola,
     :diagonaldiffusivity,
     :diagonalvolatility,
-    :diagonaldiff,
-    :diagonalvola,
     :diagonalσ,
+    :diagdiff,
+    :diagvola,
+    :diagdiffusivity,
+    :diagvolatility,
+    :diagσ,
 ]
 _SPARSEDIFF = [
     :sparsediff,
     :sparsevola,
     :sparsediffusivity,
     :sparsevolatility,
-    :sparsediff,
-    :sparsevola,
     :sparseσ,
+]
+_DIAGONALBMAT = [
+    :diagonalbmat,
+    :diagonalb,
+    :diagonalbmatrix,
+]
+_SPARSEBMAT = [
+    :sparsebmat,
+    :sparseb,
+    :sparsebmatrix,
 ]
 _LINEAR = [:linear, :lineardiffusion]
 _ELTYPE = [:eltype]
@@ -173,12 +193,14 @@ function parse_process(name , ex::Expr, ::Any)
         dims = Dict{Symbol,Int64}(),
         extras = Dict{Symbol, Any}(),
         fns = Vector{Expr}(undef, 0),
+        constp = Symbol[],
+        nonconstp = Symbol[],
     )
 
     # parse lines defining parameters to get all parameter names first
-    parse_lines!(ex, p, x->(x == _PARAMETERS[1]))
+    parse_lines!(ex, p, x->( x in [_PARAMETERS[1], _CONSTPARAMETERS[1]] ))
     # parse all other lines
-    parse_lines!(ex, p, x->(x != _PARAMETERS[1]))
+    parse_lines!(ex, p, x-> !( x in [_PARAMETERS[1], _CONSTPARAMETERS[1]] ))
     fill_unspecified_with_defaults(p)
 
     abstract_type = prepare_abstract_type(
@@ -200,8 +222,9 @@ function parse_process(name , ex::Expr, ::Any)
     add_diff_function!(p.fns, p)
     add_end_point_info_function!(p.fns, p)
     add_parameters_function!(p.fns, p)
+    add_parameters_function!(p.fns, p, :const_parameters, p.constp, identity)
+    add_parameters_function!(p.fns, p, :var_parameters, p.nonconstp, identity)
     add_end_point_info_names_function!(p.fns, p)
-    add_parameter_names_function!(p.fns, p)
 
     eval(struct_def)
     for fn in p.fns
@@ -250,6 +273,7 @@ template is supposed to be encoding.
 function update_label(line, current_label)
     _symbol_in(line, _DIMENSIONS) && return _DIMENSIONS[1]
     _symbol_in(line, _PARAMETERS) && return _PARAMETERS[1]
+    _symbol_in(line, _CONSTPARAMETERS) && return _CONSTPARAMETERS[1]
     _symbol_in(line, _ENDPOINTINFO) && return _ENDPOINTINFO[1]
     _symbol_in(line, _CONJUGATE) && return _CONJUGATE[1]
     _symbol_in(line, _EXTRA) && return _EXTRA[1]
@@ -268,14 +292,16 @@ Parse a line that defines parameters of the diffusion. The line must be in a
 format:
     name --> parameter-description
 """
-function parse_line!(::Val{:parameters}, line, p)
+function parse_line!(
+        ::K, line, p
+    ) where K <: Union{Val{:parameters}, Val{:const_parameters}}
     param_name = line.args[1]
 
     if typeof(param_name) <: Symbol
-        parse_param_single_name(line, p)
+        parse_param_single_name(line, p, K==Val{:const_parameters})
     else
         @assert param_name.head == :tuple
-        parse_param_multi_names(line, p)
+        parse_param_multi_names(line, p, K==Val{:const_parameters})
     end
 end
 
@@ -290,7 +316,7 @@ In the former case defines `number_of_parameters`-many parameters, with names
 `parameter_name`i and of `datatype` type. In the latter case defines a
 single parameters with name `parameter_name` and of type `datatype`.
 """
-function parse_param_single_name(line, p)
+function parse_param_single_name(line, p, const_param=false)
     name_stem, disambig_idx, generic_name = get_name_stem(
         line.args[1], p.parameters
     )
@@ -308,6 +334,7 @@ function parse_param_single_name(line, p)
     for i in 1:num_params
         name = ( generic_name ? Symbol(name_stem, disambig_idx+i) : name_stem )
         append!(p.parameters, [(name, data_type, name_stem, disambig_idx+i)])
+        push!( (const_param ? p.constp : p.nonconstp), name)
     end
 end
 
@@ -362,7 +389,7 @@ In the former two cases defines `number_of_parameters`-many parameters, with
 names `p_name1`, `p_name2`, ... and of `datatype` type. In the last case the
 datatypes differ from parameter to parameter.
 """
-function parse_param_multi_names(line, p)
+function parse_param_multi_names(line, p, const_param=false)
     names = line.args[1].args
     data_types = line.args[2]
 
@@ -387,14 +414,16 @@ function parse_param_multi_names(line, p)
     for (n,d) in zip(names, data_types)
         @assert !(n in current_param_names)
         append!(p.parameters, [(n,d,n,1)])
+        push!( (const_param ? p.constp : p.nonconstp), n)
     end
 end
 
-
-function add_parameters_function!(fns, p)
+function add_parameters_function!(
+        fns, p, f_name=:parameters, coll=p.parameters, λ=(x->x[1])
+    )
     fn_def = Expr(
         :call,
-        :parameters,
+        f_name,
         Expr(:(::),
             :P,
             p.name
@@ -402,39 +431,21 @@ function add_parameters_function!(fns, p)
     )
     fn_body = Expr(
         :tuple,
-        [Expr(:., :P, QuoteNode(x[1])) for x in p.parameters]...,
+        [
+            Expr(
+                :call,
+                :(=>),
+                QuoteNode(λ(x)),
+                Expr(
+                    :.,
+                    :P,
+                    QuoteNode(λ(x))
+                )
+            )
+            for x in coll
+        ]...,
     )
     push!(fns, Expr(:(=), fn_def, fn_body))
-end
-
-function add_parameter_names_function!(fns, p)
-    fn_def1 = Expr(
-        :call,
-        :parameter_names,
-        Expr(
-            :(::),
-            Expr(
-                :curly,
-                :Type,
-                p.name,
-            )
-        )
-    )
-    fn_def2 = Expr(
-        :call,
-        :parameter_names,
-        Expr(
-            :(::),
-            :P,
-            p.name,
-        )
-    )
-    fn_body = Expr(
-        :tuple,
-        [QuoteNode(x[1]) for x in p.parameters]...,
-    )
-    push!(fns, Expr(:(=), fn_def1, fn_body))
-    push!(fns, Expr(:(=), fn_def2, fn_body))
 end
 
 
@@ -620,6 +631,8 @@ function parse_line!(::Val{:additional}, line, p)
     _symbol_in(name, _CONSTDIFF) && (name = _CONSTDIFF[1])
     _symbol_in(name, _SPARSEDIFF) && (name = _SPARSEDIFF[1])
     _symbol_in(name, _DIAGONALDIFF) && (name = _DIAGONALDIFF[1])
+    _symbol_in(name, _SPARSEBMAT) && (name = _SPARSEBMAT[1])
+    _symbol_in(name, _DIAGONALBMAT) && (name = _DIAGONALBMAT[1])
     _symbol_in(name, _LINEAR) && (name = _LINEAR[1])
     _symbol_in(name, _ELTYPE) && (name = _ELTYPE[1])
 
@@ -636,7 +649,9 @@ function add_diff_function!(fns, p)
     to_add = [
         (:constdiff, _CONSTDIFF[1]),
         (:sparsediff, _SPARSEDIFF[1]),
-        (:diagonaldiff, _DIAGONALDIFF[1])
+        (:diagonaldiff, _DIAGONALDIFF[1]),
+        (:sparseBmat, _SPARSEBMAT[1]),
+        (:diagonalBmat, _DIAGONALBMAT[1])
     ]
     for (name, _NAME) in to_add
         fn_def = Expr(:call,
@@ -709,6 +724,8 @@ function fill_unspecified_with_defaults(::Val{:additional}, p)
         (_CONSTDIFF[1], false),
         (_SPARSEDIFF[1], false),
         (_DIAGONALDIFF[1], false),
+        (_SPARSEBMAT[1], false),
+        (_DIAGONALBMAT[1], false),
         (_LINEAR[1], false),
         (_ELTYPE[1], Float64),
         (_NUMNONHYPO[1], (

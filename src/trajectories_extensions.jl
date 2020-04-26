@@ -10,6 +10,7 @@ Create a Trajectory with mutable states of dimension `D` along the time
 collection `tt`.
 """
 function Trajectories.trajectory(tt, v::Type, D::Number)
+    ismutable(v) == Val(false) && return trajectory(tt, v)
     trajectory(collect(tt), [zeros(eltype(v),D) for _ in tt])
 end
 

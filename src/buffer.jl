@@ -96,8 +96,8 @@ Standard buffer for the Euler-Maruyama simulations. The data is stored in
 corresponding segments of `data`. `T` is the DataType of each data element
 and `D` are dimensions needed to create the views.
 """
-struct StandardEulerBuffer{T,Tb,Tσ,Tdw} <: AbstractBuffer{T}
-    data::ArrayPartition{T,Tuple{Tb, Tb, Tσ, Tdw}}
+struct StandardEulerBuffer{T,TD,Tb,Tσ,Tdw} <: AbstractBuffer{T}
+    data::TD
     b::Tb
     y::Tb
     σ::Tσ
@@ -105,47 +105,50 @@ struct StandardEulerBuffer{T,Tb,Tσ,Tdw} <: AbstractBuffer{T}
 end
 
 function StandardEulerBuffer(b::Tb, σ::Tσ, dW::Tdw) where {Tb, Tσ, Tdw}
-    #TODO fix T for ForwardDiff
-    T = eltype(dW)
-    @assert eltype(b) == eltype(σ) == T
-    y_temp = deepcopy(b)
-    StandardEulerBuffer{T, Tb, Tσ, Tdw}(
-        ArrayPartition(b, y_temp, σ, dW), b, y_temp, σ, dW
-    )
+    y = deepcopy(b)
+    data = ArrayPartition(b, y, σ, dW)
+    T, TD = eltype(y), typeof(data)
+    StandardEulerBuffer{T, TD, Tb, Tσ, Tdw}(data, b, y, σ, dW)
 end
 
-function StandardEulerBuffer{K}(P::DiffusionProcess{T,DP}) where {K,T,DP}
-    dW = zero(P, Val(:wiener))
+function StandardEulerBuffer{K}(P::DiffusionProcess{T,DP,DW}) where {K,T,DP,DW}
+    # dW always falls on defaults or not?
+    dW = zero(K, DW, ismutable(K)) # zero(P, Val(:wiener))
     b = zero(K, DP, ismutable(K))
-    σ = init_σ_for_buffer(P, Val(diagonaldiff(P)), Val(sparsediff(P)), K)
+    σ = _init_mat_for_buffer(
+        Val(diagonaldiff(P)),
+        Val(sparsediff(P)),
+        K,
+        tuple(dimension(P)...)
+    )
     StandardEulerBuffer(b, σ, dW)
 end
 
-function init_σ_for_buffer(
-        P::DiffusionProcess{T,DP,DW},
-        ::Val{false},
-        ::Val{false},
-        ::Type{K}
-    ) where {T,DP,DW,K}
-    σ = zero(K, (DP, DW), ismutable(K))
+function _init_mat_for_buffer(
+        ::Val{false}, # diagonal
+        ::Val{false}, # sparse
+        ::Type{K}, # eltype
+        dims
+    ) where K
+    zeros(eltype(K), dims)
 end
 
-function init_σ_for_buffer(
-        P::DiffusionProcess{T,DP,DW},
-        ::Val{true},
-        ::Any,
-        ::Type{K}
-    ) where {T,DP,DW,K}
-    σ = Diagonal{eltype(K)}(zero(K, DW, ismutable(K)))
+function _init_mat_for_buffer(
+        ::Val{true}, # diagonal
+        ::Any, # sparse
+        ::Type{K}, # eltype
+        dims
+    ) where K
+    Diagonal{eltype(K)}(zeros(eltype(K), dims[1]))
 end
 
-function init_σ_for_buffer(
-        P::DiffusionProcess{T,DP,DW},
-        ::Val{false},
-        ::Val{true},
-        ::Type{K}
-    ) where {T,DP,DW,K}
-    error("sparse arrays not implemented yet")
+function _init_mat_for_buffer(
+        ::Val{false}, # diagonal
+        ::Val{true}, # sparse
+        ::Type{K}, # eltype
+        dims
+    ) where K
+    spzeros(eltype(K), dims...)
 end
 
 """
@@ -161,8 +164,8 @@ A buffer for Euler-Maruyama simulations of linear diffusions. Almost the same
 as `StandardEulerBuffer`, but contains additional space for an intermediate
 construction of a matrix `B` (and a corrsponding view).
 """
-struct LinearDiffBuffer{T,Tb,Tσ,Tdw,TB} <: AbstractBuffer{T}
-    data::ArrayPartition{T,Tuple{Tb, Tb, Tσ, Tdw, TB}}
+struct LinearDiffBuffer{T,TD,Tb,Tσ,Tdw,TB} <: AbstractBuffer{T}
+    data::TD
     b::Tb
     y::Tb
     σ::Tσ
@@ -171,21 +174,26 @@ struct LinearDiffBuffer{T,Tb,Tσ,Tdw,TB} <: AbstractBuffer{T}
 end
 
 function LinearDiffBuffer(b::Tb, σ::Tσ, dW::Tdw, B::TB) where {Tb, Tσ, Tdw, TB}
-    #TODO fix T for ForwardDiff
-    T = eltype(dW)
-    @assert eltype(b) == eltype(σ) == eltype(TB) == T
-    y_temp = deepcopy(b)
-    LinearDiffBuffer{T, Tb, Tσ, Tdw, TB}(
-        ArrayPartition(b, y_temp, σ, dW, B), b, y_temp, σ, dW, B
-    )
+    y = deepcopy(b)
+    data = ArrayPartition(b, y, σ, dW, B)
+    T, TD = eltype(y), typeof(data)
+    LinearDiffBuffer{T, TD, Tb, Tσ, Tdw, TB}(data, b, y, σ, dW, B)
 end
 
 function LinearDiffBuffer{K}(P::LinearDiffusion{T,DP,DW}) where {K,T,DP,DW}
     dW = zero(K, DW, ismutable(K))
     b = zero(K, DP, ismutable(K))
-    σ = init_σ_for_buffer(P, Val(diagonaldiff(P)), Val(sparsediff(P)), K)
-    B = zero(K, (DP, DP), ismutable(K)) # change to initialize similarly to σ
+    σ = _init_mat_for_buffer(
+        Val(diagonaldiff(P)),
+        Val(sparsediff(P)),
+        K,
+        tuple(dimension(P)...)
+    )
+    B = _init_mat_for_buffer(
+        Val(diagonalBmat(P)),
+        Val(sparseBmat(P)),
+        K,
+        (dim_process(P), dim_process(P))
+    )
     LinearDiffBuffer(b, σ, dW, B)
 end
-
-get_B(seb::LinearDiffBuffer) = seb.data.x[5]

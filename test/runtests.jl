@@ -52,9 +52,11 @@ DD = DiffusionDefinition
     @test !(typeof(P) <: DD.LinearDiffusion)
     @test eltype(P) == Float64
 
-    @test DD.parameter_names(P) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
-    @test DD.parameter_names(typeof(P)) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
-    @test DD.parameters(P) == param_tuple
+    param_names = (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
+    @test DD.parameter_names(P) == param_names
+    #TODO introduce this back ?
+    #@test DD.parameter_names(typeof(P)) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
+    @test DD.parameters(P) == tuple([n=>p for (n,p) in zip(param_names, param_tuple)]...)
     @test DD.end_point_info_names(P) == (:T, :vT, :xT)
     @test DD.end_point_info(P) == (end_point_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
 
@@ -78,7 +80,7 @@ DD = DiffusionDefinition
     P = TestDiffusion2(param_tuple..., end_point_info_tuple...)
 
     @test DD.parameter_names(P) == (:p1, :p2, :p3)
-    @test DD.parameters(P) == param_tuple
+    @test DD.parameters(P) == (:p1 => 1.0, :p2 => 2.0, :p3 => 3.0)
     @test DD.end_point_info_names(P) == (:T, :vT, :xT)
     @test DD.end_point_info(P) == (end_point_info_tuple..., (@SVector [0.0, 0.0, 0.0]))
 

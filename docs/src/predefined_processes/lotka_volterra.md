@@ -1,4 +1,4 @@
-# Lotka-Volterra
+# [Lotka-Volterra](@id example_lotka_volterra)
 A simple, scalar-valued predator-prey model.
 
 ```math

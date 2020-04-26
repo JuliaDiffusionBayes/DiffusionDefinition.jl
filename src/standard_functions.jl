@@ -29,7 +29,7 @@ state_space(::DiffusionProcess{T,DP,DW,SS}) where {T,DP,DW,SS} = SS
 """
     default_type(::DiffusionProcess{T,DP})
 
-Allows for inferrence of data type that encodes the state space of a given
+Allows for inference of data type that encodes the state space of a given
 diffusion.
 """
 default_type(::DiffusionProcess{T,DP}) where {T,DP} = SVector{DP,T}
@@ -37,10 +37,56 @@ default_type(::DiffusionProcess{T,DP}) where {T,DP} = SVector{DP,T}
 """
     default_wiener_type(::DiffusionProcess{T,DP,DW})
 
-Allows for inferrence of data type that encodes the state space of the Brownian
+Allows for inference of data type that encodes the state space of the Brownian
 motion driving a given diffusion process.
 """
 default_wiener_type(::DiffusionProcess{T,DP,DW}) where {T,DP,DW} = SVector{DW,T}
+
+"""
+    parameters(P::DiffusionProcess)
+
+Return a tuple of pairs of `parameter_name` => `parameter_value`.
+"""
+function parameters(P::DiffusionProcess) end
+
+"""
+    const_parameters(P::DiffusionProcess)
+
+Return a tuple of pairs of `parameter_name` => `parameter_value`. Return only
+those parameteres that are considered to be `constant`.
+"""
+function const_parameters(P::DiffusionProcess) end
+
+"""
+    var_parameters(P::DiffusionProcess)
+
+Return a tuple of pairs of `parameter_name` => `parameter_value`. Return only
+those parameteres that are considered to be `variable`.
+"""
+function var_parameters(P::DiffusionProcess) end
+
+"""
+    parameter_names(P::DiffusionProcess)
+
+Return a tuple with the names of all paremeters.
+"""
+parameter_names(P::DiffusionProcess) = first.(parameters(P))
+
+"""
+    const_parameter_names(P::DiffusionProcess)
+
+Return a tuple with the names of all paremeters that are considered to be
+`constant`.
+"""
+const_parameter_names(P::DiffusionProcess) = first.(const_parameters(P))
+
+"""
+    var_parameter_names(P::DiffusionProcess)
+
+Return a tuple with the names of all paremeters that are considered to be
+`variable`.
+"""
+var_parameter_names(P::DiffusionProcess) =first.(var_parameters(P))
 
 a(t, x, P::DiffusionProcess) = σ(t, x, P) * σ(t, x, P)'
 
@@ -72,9 +118,44 @@ _σ((t,i)::IndexedTime, x, P::DiffusionProcess) = σ(t, x, P)
 _b!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = b!(buffer, t, x, P)
 _σ!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = σ!(buffer, t, x, P)
 
+"""
+    diagonaldiff(P::DiffusionProcess)
+
+Indicator for whether the volatility coefficient is represented by a diagonal
+matrix
+"""
 diagonaldiff(P::DiffusionProcess) = false
+
+"""
+    sparsediff(P::DiffusionProcess)
+
+Indicator for whether the volatility coefficient is represented by a sparse
+matrix
+"""
 sparsediff(P::DiffusionProcess) = false
 
+"""
+    diagonalBmat(P::DiffusionProcess)
+
+Indicator for whether the B matrix (if exists) is represented by a diagonal
+matrix
+"""
+diagonalBmat(P::DiffusionProcess) = false
+
+"""
+    sparseBmat(P::DiffusionProcess)
+
+Indicator for whether the B matrix (if exists) is represented by a sparse
+matrix
+"""
+sparseBmat(P::DiffusionProcess) = false
+
+"""
+    clone(P::T, args...)
+
+Instantiate a new diffusion process of the same type as `P` but with new
+arguments `args`.
+"""
 clone(P::T, args...) where T<:DiffusionProcess = T(args...)
 
 function update_params(P::T, new_params...) where T<:DiffusionProcess
@@ -117,15 +198,28 @@ Base.zero
 Base.zero(K::Type, D, ::Val{true}) = zeros(eltype(K), D)
 Base.zero(K::Type, D, ::Val{false}) = zero(K)
 
+
+
+"""
+    end_point_info
+
+Return information about the end-point (works only if some information of this
+kind has been passed at the time of defining a struct) TODO improve
+"""
+function end_point_info end
+
+"""
+    end_point_info_names
+
+Return names of information pieces about the end-point (works only if some
+information of this kind has been passed at the time of defining a struct)
+TODO improve
+"""
+function end_point_info_names end
+
+
 #custom_zero(D::Integer, ::Type{K}) where K <: Array = zeros(eltype(K), D)
 #custom_zero(D::Integer, ::Type{K}) where K = zero(K)
-
-"""
-    parameter_names
-
-Return names of the parameters of a given object
-"""
-function parameter_names end
 
 #=
 function sequential_add!(save_to, x, y, a=true, b=true, c=false)

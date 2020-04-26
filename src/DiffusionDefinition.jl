@@ -1,10 +1,11 @@
 module DiffusionDefinition
 
     using Random, Trajectories
-    using LinearAlgebra, StaticArrays
+    using LinearAlgebra, StaticArrays, SparseArrays
     using MacroTools
     using RecipesBase
     using RecursiveArrayTools
+    using ForwardDiff
 
     const ℝ{N} = SVector{N,Float64}
 
@@ -25,7 +26,7 @@ module DiffusionDefinition
         BoundedStateSpace
 
     export AbstractBuffer
-    export Wiener
+    export Wiener, wiener
 
     using Reexport
     @reexport using Trajectories

@@ -29,25 +29,20 @@ A struct defining the Wiener process. `D` indicates the dimension of the process
 if it cannot be inferred from the DataType of the Trajectory. If the dimension
 can be inferred then it takes precedence over the value of `D`.
 """
-struct Wiener{D,Tdevice}
-    Wiener{D,Tdevice}() where {D,Tdevice} = new{D,Tdevice}()
-    Wiener{D}() where D = new{D,:unspec}()
-    Wiener(D::Integer=false, device::Symbol=:unspec) = new{D,device}()
-    function Wiener(
-            ::DiffusionProcess{T,TP,TW},
-            device::Symbol=:unspec
-        ) where {T,TP,TW}
-        new{TW,device}()
-    end
+struct Wiener{D,T}
+    Wiener{D}() where D = new{D,Float64}()
+    Wiener{D,T}() where {D,T} = new{D,T}()
+    Wiener(D::Integer=false, T::Type=Float64) = new{D,T}()
+    Wiener(::DiffusionProcess{T,TP,TW}) where {T,TP,TW} = new{TW,T}()
 end
 wiener(args...) = Wiener(args...)
 
 ismutable(el) = ismutable(typeof(el))
-ismutable(::Type) = Val(true)
-ismutable(::Type{K}) where K<:Union{Number,SArray} = Val(false)
+ismutable(::Type) = Val(false)
+ismutable(::Type{K}) where K<:Array = Val(true)
 ismutable(::Trajectory{T,Vector{K}}) where {T,K} = ismutable(K)
 
-Base.zero(w::Wiener{D}) where D = zero(SVector{D,Float64})
+Base.zero(w::Wiener{D,T}) where {D,T} = zero(SVector{D,T})
 
 #===============================================================================
                         Sampling Wiener processes
@@ -149,9 +144,15 @@ end
                     Euler-Maruyama scheme for solving SDEs
 ===============================================================================#
 
-# needed for ForwardDiff
 value(x) = x
 value!(y, x) = (y.= x)
+value(x::SVector{N,ForwardDiff.Dual{K,T,M}}) where {N,K,T,M} = SVector{N,T}(
+    map(x->x.value, x)
+)
+value!(y, x::AbstractArray{<:ForwardDiff.Dual}) = map!(x->x.value, y, x)
+
+@inline _DEFAULT_F(args...) = nothing
+const _FINAL = Val(:final)
 
 """
     solve!(XX, WW, P, y1)
@@ -161,7 +162,9 @@ from the sampled Wiener process `WW`. Save the sampled path in `XX`. Return
 prematurely with a `false` massage if the numerical scheme has led to the solver
 violating the state-space restrictions.
 """
-solve!(XX, WW, P, y1) = solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1)
+function solve!(XX, WW, P, y1; f::Function=_DEFAULT_F)
+    solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1; f=f)
+end
 
 """
     solve!(XX, WW, P, y1, buffer)
@@ -169,50 +172,63 @@ solve!(XX, WW, P, y1) = solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1)
 Same as `solve!(XX, WW, P, y1)`, but additionally provides a pre-allocated
 buffer for performing in-place computations.
 """
-function solve!(XX, WW, P, y1, buffer)
-    solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1, buffer)
+function solve!(XX, WW, P, y1, buffer; f::Function=_DEFAULT_F)
+    solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1, buffer; f=f)
 end
 
-function solve!(::EulerMaruyama, ::Val{false}, XX, WW, P, y1::Ky1) where Ky1
+function solve!(
+        ::EulerMaruyama, ::Val{false}, XX, WW, P, y1::Ky1;
+        f::Function=_DEFAULT_F
+    ) where Ky1
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
 
     yy[1] = value(y1)
     y = y1 # more appropriate name
+    f_accum = f(P, y)
+
     for i in 2:N
         dt = tt[i] - tt[i-1]
         dW = ww[i] - ww[i-1]
+        f_accum = f(f_accum, P, y, tt[i-1], dt, dW, i-1)
+
         y = y + _b((tt[i-1], i-1), y, P)*dt + _σ((tt[i-1], i-1), y, P)*dW
+
         yy[i] = value(y) # strip duals
         bound_satisfied(P, yy[i]) || return false, nothing
     end
-    true, y
+    f_accum = f(f_accum, P, y, _FINAL)
+    true, f_accum
 end
 
 function solve!(
         ::EulerMaruyama, ::Val{true}, XX, WW, P, y1::K,
-        buffer=StandardEulerBuffer{K}(P)
+        buffer=StandardEulerBuffer{K}(P);
+        f::Function=_DEFAULT_F
     ) where K
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
 
     value!(yy[1], y1)
     y::K = y1 # name alias
+    f_accum = f(buffer, P, y)
 
     for i in 2:N
         dt = tt[i] - tt[i-1]
+        buffer.dW .= ww[i] .- ww[i-1]
+        f(buffer, P, y, tt[i-1], dt, i-1)
 
         _b!(buffer, (tt[i-1], i-1), y, P)
         _σ!(buffer, (tt[i-1], i-1), y, P)
 
-        buffer.dW .= ww[i] .- ww[i-1]
         mul!(buffer.y, buffer.σ, buffer.dW)
         y .= y .+ buffer.y .+ buffer.b .* dt
 
         value!(yy[i], y) # strip duals
         bound_satisfied(P, yy[i]) || return false, nothing
     end
-    true, y
+    f(buffer, P, y, _FINAL)
+    true, f_accum
 end
 
 
@@ -252,8 +268,8 @@ end
         Sampling Diffusion processes using the Euler Maruyama scheme
 ===============================================================================#
 
-function Base.rand(P::DiffusionProcess, tt, y1=zero(P))
-    rand(Random.GLOBAL_RNG, P, tt, y1, ismutable(y1))
+function Base.rand(P::DiffusionProcess, tt, y1=zero(P); f=_DEFAULT_F)
+    rand(Random.GLOBAL_RNG, P, tt, y1, ismutable(y1); f=f)
 end
 
 function Base.rand(
@@ -261,16 +277,18 @@ function Base.rand(
         P::DiffusionProcess{T,DP,DW},
         tt,
         y1::K,
-        v::Val{true}
+        v::Val{true};
+        f=_DEFAULT_F
     ) where {T,DP,DW,K}
     WW = rand(rng, Wiener{DW}(), tt, zeros(eltype(y1), DW))
     XX = trajectory(tt, K, DP, v)
-    success, end_pt = false, nothing
+    success, f_accum = false, nothing
     buffer = StandardEulerBuffer{K}(P)
     while !success
-        success, end_pt = solve!(XX, WW, P, y1, buffer)
+        success, f_accum = solve!(XX, WW, P, y1, buffer; f=f)
     end
-    XX, end_pt
+    typeof(f) != typeof(_DEFAULT_F) && return XX, f_accum
+    XX
 end
 
 StaticArrays.similar_type(::Type{K}, s::Size) where K <: Number = SVector{s[1],K}
@@ -280,13 +298,15 @@ function Base.rand(
         P::DiffusionProcess{T,DP,DW},
         tt,
         y1::K,
-        v::Val{false}
+        v::Val{false};
+        f=_DEFAULT_F
     ) where {T,DP,DW,K}
     WW = rand(rng, Wiener(), tt, zero(similar_type(K, Size(DW))))
     XX = trajectory(tt, K, DP, v)
-    success, end_pt = false, nothing
+    success, f_accum = false, nothing
     while !success
-        success, end_pt = solve!(XX, WW, P, y1)
+        success, f_accum = solve!(XX, WW, P, y1; f=f)
     end
-    XX, end_pt
+    typeof(f) != typeof(_DEFAULT_F) && return XX, f_accum
+    XX
 end
