@@ -17,9 +17,6 @@ For instance, to define a Lorenz system it is enough to write
     :parameters
     p --> (3, Float64)
     σ --> Float64
-
-    :additional
-    constdiff --> true
 end
 
 b(t, x, P::Lorenz) = @SVector [
@@ -40,9 +37,6 @@ It is also possible to include template parameters, for instance:
     :parameters
     p --> (3, T)
     σ --> Float64
-
-    :additional
-    constdiff --> true
 end
 ```
 We also provide some examples of pre-defined diffusion processes that can be
@@ -56,9 +50,7 @@ To see a list of all pre-defined examples call
 ```
 We additionally provide some functionality for sampling trajectories. For instance, to sample a three-dimensional standard Brownian motion use:
 ```julia
-const DD = DiffusionDefinition
-tt = collect(0.0:0.01:1.0)
-wiener_path = rand(Wiener(), zero(DD.ℝ{3}), tt)
+wiener_path = rand(Wiener(3, Float64), 0.0:0.01:1.0)
 ```
 The wiener path can then be used in an Euler-Maruyama scheme to compute a trajectory under a given diffusion law:
 ```julia
@@ -68,7 +60,7 @@ DD.solve!(XX, wiener_path, P, zero(DD.ℝ{3}))
 ```
 The two-step sampling recipe above can also be done at once by calling:
 ```julia
-XX = rand(P, zero(DD.ℝ{3}), tt)
+XX = rand(P, tt, zero(DD.ℝ{3}))
 ```
 See the [documentation](https://JuliaDiffusionBayes.github.io/DiffusionDefinition.jl/dev)
 for a comprehensive overview.
