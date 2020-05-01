@@ -61,7 +61,7 @@ P_f32 = Lorenz(10.0f0, 8.0f0/3.0f0, 28.0f0, 0.2)
 We can also call some functions that were auto-generated for the newly defined `Lorenz` struct, for instance
 ```julia
 DD.parameter_names(P_f64) == (:p1, :p2, :p3, :σ)
-DD.parameters(P_f64) == (10.0, 8.0/3.0, 28.0, 0.2)
+DD.parameters(P_f64) == (:p1 => 10.0, :p2 => 8.0/3.0, :p3 => 28.0, :σ => 0.2)
 ```
 More functions are automatically defined in the background for each generated `DiffusionProcess`, to learn more about them see [Convenience Functions](@ref utility_functions).
 
