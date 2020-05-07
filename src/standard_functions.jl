@@ -47,7 +47,12 @@ default_wiener_type(::DiffusionProcess{T,DP,DW}) where {T,DP,DW} = SVector{DW,T}
 
 Return a tuple of pairs of `parameter_name` => `parameter_value`.
 """
-function parameters(P::DiffusionProcess) end
+parameters(P::DiffusionProcess) = Dict(
+    map(
+        p->( p=>getfield(P, p) ),
+        parameter_names(P)
+    )
+)
 
 """
     const_parameters(P::DiffusionProcess)
@@ -55,7 +60,12 @@ function parameters(P::DiffusionProcess) end
 Return a tuple of pairs of `parameter_name` => `parameter_value`. Return only
 those parameteres that are considered to be `constant`.
 """
-function const_parameters(P::DiffusionProcess) end
+const_parameters(P::DiffusionProcess) = Dict(
+    map(
+        p->( p=>getfield(P, p) ),
+        const_parameter_names(P)
+    )
+)
 
 """
     var_parameters(P::DiffusionProcess)
@@ -63,14 +73,26 @@ function const_parameters(P::DiffusionProcess) end
 Return a tuple of pairs of `parameter_name` => `parameter_value`. Return only
 those parameteres that are considered to be `variable`.
 """
-function var_parameters(P::DiffusionProcess) end
+var_parameters(P::DiffusionProcess) = Dict(
+    map(
+        p->( p=>getfield(P, p) ),
+        var_parameter_names(P)
+    )
+)
 
 """
     parameter_names(P::DiffusionProcess)
 
 Return a tuple with the names of all paremeters.
 """
-parameter_names(P::DiffusionProcess) = first.(parameters(P))
+parameter_names(P::DiffusionProcess) = parameter_names(typeof(P))
+
+"""
+    parameter_names(::Type{<:DiffusionProcess})
+
+Return a tuple with the names of all paremeters.
+"""
+function parameter_names(::Type{<:DiffusionProcess}) end
 
 """
     const_parameter_names(P::DiffusionProcess)
@@ -78,7 +100,15 @@ parameter_names(P::DiffusionProcess) = first.(parameters(P))
 Return a tuple with the names of all paremeters that are considered to be
 `constant`.
 """
-const_parameter_names(P::DiffusionProcess) = first.(const_parameters(P))
+const_parameter_names(P::DiffusionProcess) = const_parameter_names(typeof(P))
+
+"""
+    const_parameter_names(P::Type{<:DiffusionProcess})
+
+Return a tuple with the names of all paremeters that are considered to be
+`constant`.
+"""
+function const_parameter_names(P::Type{<:DiffusionProcess}) end
 
 """
     var_parameter_names(P::DiffusionProcess)
@@ -86,7 +116,18 @@ const_parameter_names(P::DiffusionProcess) = first.(const_parameters(P))
 Return a tuple with the names of all paremeters that are considered to be
 `variable`.
 """
-var_parameter_names(P::DiffusionProcess) =first.(var_parameters(P))
+var_parameter_names(P::DiffusionProcess) = var_parameter_names(typeof(P))
+
+"""
+    var_parameter_names(P::Type{<:DiffusionProcess})
+
+Return a tuple with the names of all paremeters that are considered to be
+`variable`.
+"""
+function var_parameter_names(P::Type{<:DiffusionProcess})
+    const_pn = const_parameter_names(P)
+    Tuple(filter(p->!(p in const_pn), parameter_names(P)))
+end
 
 a(t, x, P::DiffusionProcess) = σ(t, x, P) * σ(t, x, P)'
 
@@ -150,6 +191,8 @@ matrix
 """
 sparseBmat(P::DiffusionProcess) = false
 
+
+#=
 """
     clone(P::T, args...)
 
@@ -162,7 +205,7 @@ function update_params(P::T, new_params...) where T<:DiffusionProcess
     ei = end_point_info(P)
     ei === nothing ? T(new_params...) : T(new_params..., ei...)
 end
-
+=#
 
 Base.zero(P::DiffusionProcess) = zero(P, Val(:process))
 
@@ -201,22 +244,40 @@ Base.zero(K::Type, D, ::Val{false}) = zero(K)
 
 
 """
-    end_point_info
+    end_point_info(P::DiffusionProcess)
 
 Return information about the end-point (works only if some information of this
 kind has been passed at the time of defining a struct) TODO improve
 """
-function end_point_info end
+end_point_info(P::DiffusionProcess) = Dict(
+    map(
+        p->( p=>getfield(P, p) ),
+        end_point_info_names(P)
+    )
+)
 
 """
-    end_point_info_names
+    end_point_info_names(P::DiffusionProcess)
 
 Return names of information pieces about the end-point (works only if some
 information of this kind has been passed at the time of defining a struct)
 TODO improve
 """
-function end_point_info_names end
+function end_point_info_names(P::Type{<:DiffusionProcess}) end
 
+end_point_info_names(P::DiffusionProcess) = end_point_info_names(typeof(P))
+
+function clone(P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}) where T <: DiffusionProcess
+    p = parameters(P)
+    for i in θ°idx
+        p[i.pname] = ξ[glob_to_loc[i.global_idx]]
+    end
+    remove_curly(T)(;p...)
+end
+
+function clone(P::DiffusionProcess, ξ, θ°idx, ::Val{:associate_by_position})
+    error("not implemented")
+end
 
 #custom_zero(D::Integer, ::Type{K}) where K <: Array = zeros(eltype(K), D)
 #custom_zero(D::Integer, ::Type{K}) where K = zero(K)

@@ -220,10 +220,10 @@ function parse_process(name , ex::Expr, ::Any)
     #)
 
     add_diff_function!(p.fns, p)
-    add_end_point_info_function!(p.fns, p)
-    add_parameters_function!(p.fns, p)
-    add_parameters_function!(p.fns, p, :const_parameters, p.constp, identity)
-    add_parameters_function!(p.fns, p, :var_parameters, p.nonconstp, identity)
+    add_parameter_names_function!(p.fns, p)
+    add_parameter_names_function!(p.fns, p, :const_parameter_names, p.constp, identity)
+    #add_parameter_names_function!(p.fns, p, :var_parameter_names, p.nonconstp, identity)
+    #add_end_point_info_function!(p.fns, p)
     add_end_point_info_names_function!(p.fns, p)
 
     eval(struct_def)
@@ -418,32 +418,31 @@ function parse_param_multi_names(line, p, const_param=false)
     end
 end
 
-function add_parameters_function!(
-        fns, p, f_name=:parameters, coll=p.parameters, λ=(x->x[1])
+function add_parameter_names_function!(
+        fns, p, f_name=:parameter_names, coll=p.parameters, λ=(x->x[1])
     )
+
     fn_def = Expr(
         :call,
         f_name,
-        Expr(:(::),
-            :P,
-            p.name
-        )
-    )
-    fn_body = Expr(
-        :tuple,
-        [
+        Expr(
+            :(::),
             Expr(
-                :call,
-                :(=>),
-                QuoteNode(λ(x)),
+                :curly,
+                :Type,
                 Expr(
-                    :.,
-                    :P,
-                    QuoteNode(λ(x))
+                    :(<:),
+                    p.name,
                 )
             )
-            for x in coll
-        ]...,
+        )
+    )
+    _, used_names = organize_end_point_info(p)
+
+    fn_body = Expr(
+        :tuple,
+        [QuoteNode(λ(x)) for x in coll]...,
+        [QuoteNode(name) for name in used_names]...,
     )
     push!(fns, Expr(:(=), fn_def, fn_body))
 end
@@ -470,39 +469,31 @@ function parse_line!(::Val{:aux_info}, line, p)
     p.extras[name] = line.args[2]
 end
 
-function add_end_point_info_function!(fns, p)
-    fn_def = Expr(
-        :call,
-        :end_point_info,
-        Expr(:(::),
-            :P,
-            p.name
-        )
-    )
-    _, used_names = organize_end_point_info(p)
-
-    fn_body = Expr(
-        :tuple,
-        [Expr(:., :P, QuoteNode(name)) for name in used_names]...,
-    )
-    push!(fns, Expr(:(=), fn_def, fn_body))
-end
 
 function add_end_point_info_names_function!(fns, p)
     fn_def = Expr(
         :call,
         :end_point_info_names,
-        Expr(:(::),
-            :P,
-            p.name
+        Expr(
+            :(::),
+            Expr(
+                :curly,
+                :Type,
+                Expr(
+                    :(<:),
+                    p.name,
+                )
+            )
         )
     )
+
     _, used_names = organize_end_point_info(p)
 
     fn_body = Expr(
         :tuple,
         [QuoteNode(name) for name in used_names]...,
     )
+
     push!(fns, Expr(:(=), fn_def, fn_body))
 end
 
@@ -773,45 +764,81 @@ function createstruct(abstract_type, p)
         Expr(:curly, :new, p.template_args...,)
     )
 
-    constructor_def = Expr(
-        :call,
-        p.name,
-        param_vec...,
-        end_point_info_vec[1:end-1]...,
-        (
-            length(end_point_info_vec)>0 ?
-            [
-                Expr(:kw,
-                    end_point_info_vec[end],
+    xT_default = (
+        length(end_point_info_vec)>0 ?
+        [
+            Expr(:kw,
+                end_point_info_vec[end],
+                Expr(
+                    :call,
+                    :zero,
+                    end_point_info_vec[end].args[2],
+                    p.dims[_PROCESS[1]],
                     Expr(
                         :call,
-                        :zero,
-                        end_point_info_vec[end].args[2],
-                        p.dims[_PROCESS[1]],
                         Expr(
-                            :call,
-                            Expr(
-                                :.,
-                                :DiffusionDefinition,
-                                :(:ismutable),
-                            ),
-                            end_point_info_vec[end].args[2],
-                        )
-                    ),
-                )
-            ] :
-            []
-        )...
+                            :.,
+                            :DiffusionDefinition,
+                            :(:ismutable),
+                        ),
+                        end_point_info_vec[end].args[2],
+                    )
+                ),
+            )
+        ] :
+        []
     )
 
-    constructor_def = (
-        p.template_args == Any[] ?
-        constructor_def :
-        Expr(:where,
-            constructor_def,
-            p.template_args...,
-        )
+
+    constructor_def = add_where_decorator(
+        Expr(
+            :call,
+            p.name,
+            param_vec...,
+            end_point_info_vec[1:end-1]...,
+            xT_default...
+        ),
+        p
     )
+
+    named_constructor_def = add_where_decorator(
+        Expr(
+            :call,
+            p.name,
+            Expr(
+                :parameters,
+                param_vec...,
+                end_point_info_vec...,
+            )
+        ),
+        p
+    )
+
+    partial_clone_constructor_def = add_where_decorator(
+        Expr(
+            :call,
+            p.name,
+            Expr(
+                :parameters,
+                param_vec...,
+            ),
+            end_point_info_vec[1:end-1]...,
+            xT_default...
+        ),
+        p
+    )
+
+    build_costructor(x)= Expr(
+        :function, # constructor
+        x,
+        Expr(:block,
+            Expr(:call,
+                _new,
+                map(x->x[1], p.parameters)...,
+                end_point_info_used_names...,
+            ),
+        ), # body of the constructor
+    ) # constructor
 
     struct_def = Expr(:struct,
         false, # immutable
@@ -822,20 +849,25 @@ function createstruct(abstract_type, p)
         Expr(:block,
             param_vec..., # parameters
             end_point_info_vec..., # extra info about end-points
-            Expr(:function, # constructor
-                constructor_def,
-                Expr(:block,
-                    Expr(:call,
-                        _new,
-                        map(x->x[1], p.parameters)...,
-                        end_point_info_used_names...,
-                    ),
-                ), # body of the constructor
-            ), # constructor
+            build_costructor(constructor_def),
+            build_costructor(named_constructor_def),
+            build_costructor(partial_clone_constructor_def),
         ), # body defining the struct
     )
     struct_def#, Expr(:block, param_vec..., end_point_info_vec...,), constructor_def
 end
+
+function add_where_decorator(expr, p)
+    (
+        p.template_args == Any[] ?
+        expr :
+        Expr(:where,
+            expr,
+            p.template_args...,
+        )
+    )
+end
+
 
 function organize_end_point_info(p)
     end_point_info_names = [:t0, :T, :v0, :x0, :vT, :xT]
