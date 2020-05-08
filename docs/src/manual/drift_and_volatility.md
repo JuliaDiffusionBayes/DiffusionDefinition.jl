@@ -25,8 +25,7 @@ end
 DD.σ!(buffer, t, x, P::Lorenz) = (buffer.σ.diag .= P.σ)
 ```
 In this case case the output is saved to a `buffer`, which must have appropriate fields `b` and `σ` with enough pre-allocated space (see also [the section on buffers](@ref explain_buffers)).
-!!! danger "Important"
-    Note that:
+!!! note
     * all of the functions `DD.b`, `DD.b!`, `DD.σ` and `DD.σ!` are defined to overload the functionality inside the `DiffusionDefinition` module (accessing it via `DD`) and **NOT** the `Main` module.
     * the arguments for the out-of-place method are `(t, x, P::DIFFUSION_NAME)`, whereas those for in-place are `(buffer, t, x, P::DIFFUSION_NAME)`.
 

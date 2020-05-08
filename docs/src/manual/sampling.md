@@ -17,13 +17,13 @@ path_mutable = trajectory(tt, SVector{10,Float64})
 ```
 Finally, if we are initializing containers for a specific diffusion, then we may utilize the [default types](@ref default_types_for_P) defined for this law together with information about diffusion's dimensions. For instance:
 ```julia
-P = Lorenz(10.0, 8.0/3.0, 28.0, 0.2)
+P = Lorenz(10.0, 28.0, 8.0/3.0, 1.0)
 paths = trajectory(tt, P)
 XX, WW = paths.process, paths.wiener
 ```
 Or optionally specify the types ourselves:
 ```julia
-P = Lorenz(10.0, 8.0/3.0, 28.0, 0.2)
+P = Lorenz(10.0, 28.0, 8.0/3.0, 1.0)
 paths = trajectory(
     tt,
     P,
@@ -43,7 +43,7 @@ X, W = paths.process, paths.wiener
     ```
 
 !!! tip
-    If you need to call diffusion samplers multiple times (because you use them, say, in an MCMC setting), then initializing trajectories once and passing them around to sampling functions will massively improve the overall performance of your algorithms. However, if all you want to do is sample the trajectory once or a couple of times, then you don't need to worry about initializing trajectories yourself and let it be done by the `rand` function.
+    If you need to call diffusion samplers multiple times (because you are using them, say, in an MCMC setting), then initializing trajectories once and passing them around to sampling functions will massively improve the overall performance of your algorithms. However, if all you want to do is sample the trajectory once or a couple of times, then you don't need to worry about initializing trajectories yourself and let it be done by the `rand` function.
 
 The time vector and path vector can be inspected by accessing fields `t` and `x` respectively:
 ```julia
@@ -85,7 +85,7 @@ Note that in this case there is no need to decorate `Wiener` with additional typ
 ## Sampling diffusion processes
 The simplest way of sampling a diffusion trajectory is to call:
 ```julia
-P = Lorenz(10.0, 8.0/3.0, 28.0, 0.2)
+P = Lorenz(10.0, 28.0, 8.0/3.0, 1.0)
 y1 = ... # define a starting point
 tt = 0.0:0.001:10.0
 X = rand(P, tt, y1)
@@ -103,7 +103,7 @@ If you care about performance issues—say `X` needs to be re-sampled multiple t
 ```julia
 # initialize containers:
 X, W = trajectory(P, tt)
-y1 = ...
+y1 = @SVector [-10.0, -10.0, 25.0]
 # sample Wiener path:
 rand!(Wiener(), W)
 # solve for the process trajectory
@@ -120,7 +120,10 @@ We provide plotting recipes for the `Trajectory` objects, so the `plot` function
 using Plots
 plot(X, Val(:x_vs_y); coords=[1,3])
 ```
+![lorenz_x_vs_y](../assets/manual/sampling/lorenz_x_vs_y.png)
+
 To plot all coordinates against time call:
 ```julia
 plot(X, Val(:vs_time))
 ```
+![lorenz_vs_time](../assets/manual/sampling/lorenz_vs_time.png)

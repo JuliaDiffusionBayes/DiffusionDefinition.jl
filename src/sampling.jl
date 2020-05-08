@@ -301,7 +301,13 @@ function Base.rand(
         v::Val{false};
         f=_DEFAULT_F
     ) where {T,DP,DW,K}
-    WW = rand(rng, Wiener(), tt, zero(similar_type(K, Size(DW))))
+    w0 = (
+        default_wiener_type(P) <: Number ?
+        zero(eltype(K)) :
+        zero(similar_type(K, Size(DW)))
+    )
+    WW = rand(rng, Wiener(), tt, w0)
+    println(K)
     XX = trajectory(tt, K, DP, v)
     success, f_accum = false, nothing
     while !success

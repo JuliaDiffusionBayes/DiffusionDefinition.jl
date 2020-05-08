@@ -3,9 +3,6 @@ The package is not registered yet. To install it write:
 ```julia
 ] add https://github.com/JuliaDiffusionBayes/DiffusionDefinition.jl
 ```
-# Usage
-!!! warning "TODO"
-    change for something simpler
 
 ## Defining the process
 To define a diffusion law use a macro `@diffusion_definition`:
@@ -13,46 +10,68 @@ To define a diffusion law use a macro `@diffusion_definition`:
 using DiffusionDefinition
 const DD = DiffusionDefinition
 
-@diffusion_process Lorenz begin
+@diffusion_process OrnsteinUhlenbeck begin
+    # :dimensions is optional, defaults both process and wiener to 1 anyway
     :dimensions
-    process --> 3
-    wiener --> 3
+    process --> 1
+    wiener --> 1
 
     :parameters
-    p --> (3, Float64)
-    σ --> Float64
-
-    :additional
-    constdiff --> true
-    sparsediff --> true
+    (θ, μ, σ) --> Float64
 end
 ```
-This will define a struct `Lorenz` and announce to Julia that it represents a three-dimensional diffusion process driven by a three-dimensional Brownian motion and that it depends on 4 parameters of type `Float64` each. It will also say something useful about the volatility coefficient.
+This will define a struct `OrnsteinUhlenbeck` and announce to Julia that it represents a one-dimensional diffusion process driven by a one-dimensional Brownian motion and that it depends on 3 parameters of type `Float64` each.
 
 To complete characterization of a diffusion law we define the drift and diffusion coefficients:
 ```julia
-function DD.b(t, x, P::Lorenz)
-    @SVector [
-        P.p1*(x[2]-x[1]),
-        P.p2*x[1] - x[2] - x[1]*x[3],
-        x[1]*x[2] - P.p3*x[3]
-    ]
-end
-
-DD.σ(t, x, P::Lorenz) = SDiagonal(P.σ, P.σ, P.σ)
+DD.b(t, x, P::OrnsteinUhlenbeck) = P.θ*(P.μ - x)
+DD.σ(t, x, P::OrnsteinUhlenbeck) = P.σ
 ```
-## Sampling the process
-To sample the process we use a function `rand`
+We will also specify a default datatype for convenient definition of trajectories
 ```julia
-tt = 0.0:0.001:1.0
-y1 = rand(DD.ℝ{3})
-P = Lorenz(10.0, 8.0/3.0, 28.0, 0.2)
+DD.default_type(::OrnsteinUhlenbeck) = Float64
+DD.default_wiener_type(::OrnsteinUhlenbeck) = Float64
+```
+
+## Sampling trajectories under the diffusion law
+Use the function `rand` to sample the process
+```julia
+tt, y1 = 0.0:0.01:100.0, 0.0
+P = OrnsteinUhlenbeck(2.0, 0.0, 0.1)
 X = rand(P, tt, y1)
 ```
+
 ## Plotting the process
-You may use your favourite plotting for backend and use function `plot` on the output of `rand`:
+Plotting may be done with any supported backend via function `plot`. Plotting recipes are provided which make sure that the output of `rand` (of the datatype `trajectory`) is understood by `plot`. For instance, to plot all diffusion coordinates (in case above only one) against the time variable write
 ```julia
 using Plots
 gr()
 plot(X, Val(:vs_time))
 ```
+![ou_process](../assets/get_started/ou_process.png)
+
+## Repeated sampling
+The package is implemented with the setting of Markov chain Monte Carlo methods in mind. Consequently, methods are built to be as efficient as possible under the setting of repeated sampling of trajectories. To fully leverage this speed you need to pre-allocate the containers for trajectories:
+```julia
+X, W = trajectory(tt, P)
+```
+and then sample the process by:
+1. drawing the driving Brownian motion `W`,
+2. and then, `solve!`ing the path `X` from the Wiener path `W`
+```julia
+Wnr = Wiener()
+rand!(Wnr, W)
+DD.solve!(X, W, P, x0)
+```
+Sampling trajectories multiple times becomes very efficient then, for instance:
+```julia
+julia> using BenchmarkTools
+julia> @btime begin
+           for _ in 1:10^4
+               rand!(Wnr, W)
+               DD.solve!(X, W, P, x0)
+           end
+       end
+  1.840 s (10000 allocations: 156.25 KiB)
+```
+i.e. `2`s to sample `10 000` trajectories, each revealed on a time-grid with `10 001` points (tested on an Intel(R) Core(TM) i7-4600U CPU @ 2.10GHz). Note that sampling does only one allocation per call (which is due to return of a value by `solve!`).

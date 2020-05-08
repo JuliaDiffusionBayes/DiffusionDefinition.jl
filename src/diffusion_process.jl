@@ -211,7 +211,6 @@ function parse_process(name , ex::Expr, ::Any)
     )
     #struct_def, struct_body, struct_const = createstruct(abstract_type, p)
     struct_def = createstruct(abstract_type, p)
-
     #struct_def = Expr(
     #    :macrocall,
     #    :(Core.@doc),
