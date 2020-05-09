@@ -280,11 +280,14 @@ function Base.rand(
         v::Val{true};
         f=_DEFAULT_F
     ) where {T,DP,DW,K}
-    WW = rand(rng, Wiener{DW}(), tt, zeros(eltype(y1), DW))
+    Wnr = Wiener{DW}()
+    w0 = zeros(eltype(y1), DW)
+    WW = rand(rng, Wnr, tt, w0)
     XX = trajectory(tt, K, DP, v)
     success, f_accum = false, nothing
     buffer = StandardEulerBuffer{K}(P)
     while !success
+        rand!(rng, Wnr, WW, w0)
         success, f_accum = solve!(XX, WW, P, y1, buffer; f=f)
     end
     typeof(f) != typeof(_DEFAULT_F) && return XX, f_accum
@@ -306,13 +309,53 @@ function Base.rand(
         zero(eltype(K)) :
         zero(similar_type(K, Size(DW)))
     )
-    WW = rand(rng, Wiener(), tt, w0)
-    println(K)
+    Wnr = Wiener()
+    WW = rand(rng, Wnr, tt, w0)
     XX = trajectory(tt, K, DP, v)
     success, f_accum = false, nothing
     while !success
+        rand!(rng, Wnr, WW, w0)
         success, f_accum = solve!(XX, WW, P, y1; f=f)
     end
     typeof(f) != typeof(_DEFAULT_F) && return XX, f_accum
     XX
+end
+
+#===============================================================================
+                    Computing gradients of functionals
+===============================================================================#
+
+"""
+    grad_θ(θ, y1, W, X, Law, f)
+
+Compute ∇`f` with respect to parameters `θ` for a fixed Wiener path `W`. `X` is
+a container where the the trajectory computed for the Wiener path `W` under the
+law `Law`(`θ`) will be stored. `y1` is the starting position.
+"""
+function grad_θ(θ, y1, W, X, Law, f)
+    function foo(θ°)
+        P = Law(θ°...)
+        _, foo_result = solve!(X, W, P, y1_θ; f=f)
+        foo_result
+    end
+    K = eltype(y1)
+    y1_θ_type = similar_type(θ, Dual{Tag{typeof(foo),K},K,length(θ)}, Size(y1))
+    y1_θ = y1_θ_type(y1)
+
+    ForwardDiff.gradient(foo, θ)
+end
+
+"""
+    grad_y1(y1, W, X, P, f)
+
+Compute ∇`f` with respect to the starting position `y1` for a fixed Wiener path
+`W`. `X` is a container where the the trajectory computed for the Wiener path
+`W` under the law `P` will be stored.
+"""
+function grad_y1(y1, W, X, P, f)
+    function foo(y1°)
+        _, foo_result = solve!(X, W, P, y1°; f=f)
+        foo_result
+    end
+    ForwardDiff.gradient(foo, y1)
 end

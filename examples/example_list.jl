@@ -23,7 +23,7 @@ _NAMES_TO_ACCEPTEDNAMES = Dict{Symbol,Array{Symbol}}(
     :Sine => [:sine],
     :SineAux => [:sineaux, :sine_aux],
     :SIR => [:sir],
-    :SIRAux => [:sir, :sir_aux],
+    :SIRAux => [:siraux, :sir_aux],
 )
 
 _ADMISSIBLENAMES = collect(Iterators.flatten(values(_NAMES_TO_ACCEPTEDNAMES)))

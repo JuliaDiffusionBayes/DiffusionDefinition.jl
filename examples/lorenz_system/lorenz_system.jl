@@ -1,11 +1,11 @@
-@diffusion_process Lorenz begin
+@diffusion_process Lorenz{T} begin
     :dimensions
     process --> 3
     wiener --> 3
 
     :parameters
-    _ --> (3, Float64)
-    σ --> Float64
+    _ --> (3, T)
+    σ --> T
 
     :additional
     constdiff --> true

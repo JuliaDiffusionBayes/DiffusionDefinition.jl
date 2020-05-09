@@ -1,12 +1,21 @@
-@diffusion_process SineAux begin
+@diffusion_process SineAux{K,R,S} begin
     :parameters
-    (a, b, c, σ, t, T, u, v) --> Float64
+    (a, b, c, σ) --> K
+
+    :auxiliary_info
+    t0 --> Float64
+    T --> Float64
+    x0 --> R
+    vT --> S
 
     :additional
     constdiff --> true
+    linear --> true
 end
 
-B(t, P::SinDiffusionAux) = @SMatrix [0 + (t/P.T)/5]
-β(t, P::SinDiffusionAux) = ℝ{1}((P.v-P.u)/P.T)
+DiffusionDefinition.B(t, P::SineAux) = 0.0 + (t/P.T)/5.0
+DiffusionDefinition.β(t, P::SineAux) = (P.vT-P.x0)/P.T
+DiffusionDefinition.σ(t, x, P::SineAux) = P.σ
 
-σ(t, x, P::Sine) = ℝ{1}(P.σ)
+DiffusionDefinition.default_type(::SineAux) = Float64
+DiffusionDefinition.default_wiener_type(::SineAux) = Float64

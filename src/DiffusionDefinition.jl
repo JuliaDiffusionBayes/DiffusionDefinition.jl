@@ -6,6 +6,7 @@ module DiffusionDefinition
     using RecipesBase
     using RecursiveArrayTools
     using ForwardDiff
+    import ForwardDiff: Dual, Tag
 
     const ℝ{N} = SVector{N,Float64}
 

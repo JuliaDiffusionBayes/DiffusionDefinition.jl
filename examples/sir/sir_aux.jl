@@ -1,7 +1,15 @@
-@diffusion_process SIRAux begin
+@diffusion_process SIRAux{K,R} begin
+    :dimensions
+    process --> 2
+    wiener --> 2
+
     :parameters
-    (α, β, σ1, σ2, t, T) --> Float64
-    (u, v) --> ℝ{2}
+    (α, β, σ1, σ2) --> K
+
+    :auxiliary_info
+    t0 --> Float64
+    T --> Float64
+    vT --> R
 
     :additional
     linear --> true
@@ -11,17 +19,17 @@ end
 
 function B(t, P::SIRAux)
     @SMatrix[
-        (P.α*(1 - P.v[1] - P.v[2]) - P.β)  0.0;
+        (P.α*(1.0 - P.vT[1] - P.vT[2]) - P.β)  0.0;
         P.β   0.0
     ]
 end
 
-β(t, P::SIRAux) = ℝ{2}(0.0, 0.0)
+β(t, P::SIRAux) = @SVector [0.0, 0.0]
 
 
 function σ(t, P::SIRAux)
-    @SMatrix Float64[
-        (-P.σ1*(1 - v[1] - v[2])*v[1])  -P.σ2*v[1];
-        0.0   P.σ2*v[1]
+    @SMatrix [
+        (-P.σ1*(1 - P.vT[1] - P.vT[2])*P.vT[1])  -P.σ2*P.vT[1];
+        0.0   P.σ2*P.vT[1]
     ]
 end

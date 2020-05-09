@@ -1,4 +1,5 @@
 # Sampling diffusion trajectories
+--------------------------------------------------------------------------------
 This package extends functions `Random.rand!` and `Base.rand` to sampling of trajectories of diffusion processes.
 
 ## Trajectories
@@ -102,7 +103,7 @@ The type used for states is going to be inferred from the starting point and the
 If you care about performance issues—say `X` needs to be re-sampled multiple times—then you might want to perform these steps by hand. I.e.
 ```julia
 # initialize containers:
-X, W = trajectory(P, tt)
+X, W = trajectory(tt, P)
 y1 = @SVector [-10.0, -10.0, 25.0]
 # sample Wiener path:
 rand!(Wiener(), W)

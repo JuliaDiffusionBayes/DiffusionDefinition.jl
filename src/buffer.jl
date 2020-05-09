@@ -8,26 +8,20 @@
     AbstractBuffer{T} <: AbstractArray{T,1}
 
 Types inheriting from `AbstractBuffer` define buffers used for various in-place
-computations. Each subtype MUST:
-- have a field `data` which is a one-dimensional vector with data
-- provide a constructor of the form: NAME{eltype}(dim1, dim2, ...)
-and it CAN:
-- have multiple fields that provide views or reshaped views to `data`
+computations.
 """
 abstract type AbstractBuffer end
 
 """
-    struct StandardEulerBuffer{T,D,Tb,Tσ,Tdw} <: AbstractBuffer{T}
-        data::Vector{T}
+    struct StandardEulerBuffer{Tb,Tσ,Tdw} <: AbstractBuffer
         b::Tb
+        y::Tb
         σ::Tσ
         dW::Tdw
     end
 
-Standard buffer for the Euler-Maruyama simulations. The data is stored in
-`data` and `b`, `σ`, `dW` provide appropriately reshaped views to the
-corresponding segments of `data`. `T` is the DataType of each data element
-and `D` are dimensions needed to create the views.
+Standard buffer for the Euler-Maruyama simulations. The intermediary data is
+stored in `b`, `σ`, `y` and `dW`.
 """
 struct StandardEulerBuffer{Tb,Tσ,Tdw} <: AbstractBuffer
     b::Tb
@@ -82,17 +76,17 @@ function _init_mat_for_buffer(
 end
 
 """
-    struct LinearDiffBuffer{T,D,Tb,TB,Tσ,Tdw} <: AbstractBuffer{T}
-        data::Vector{T}
+    struct LinearDiffBuffer{Tb,Tσ,Tdw,TB} <: AbstractBuffer
         b::Tb
-        B::TB
+        y::Tb
         σ::Tσ
         dW::Tdw
+        B::TB
     end
 
 A buffer for Euler-Maruyama simulations of linear diffusions. Almost the same
 as `StandardEulerBuffer`, but contains additional space for an intermediate
-construction of a matrix `B` (and a corrsponding view).
+construction of a matrix `B`.
 """
 struct LinearDiffBuffer{Tb,Tσ,Tdw,TB} <: AbstractBuffer
     b::Tb
@@ -124,9 +118,6 @@ function LinearDiffBuffer{K}(P::LinearDiffusion{T,DP,DW}) where {K,T,DP,DW}
     )
     LinearDiffBuffer(b, σ, dW, B)
 end
-
-
-
 
 
 """

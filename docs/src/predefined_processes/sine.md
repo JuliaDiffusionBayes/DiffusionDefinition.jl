@@ -8,6 +8,17 @@ It can be called with
 @load_diffusion :Sine
 ```
 
+#### Example
+```julia
+@load_diffusion Sine
+θ = [1.0, 2.0, 8.0, 0.5]
+P = Sine(θ...)
+tt, y1 = 0.0:0.001:20.0, 0.0
+X = rand(P, tt, y1)
+plot(X)
+```
+![sine](../assets/pred_diff/sine/sine.png)
+
 ### Auxiliary diffusion
 We define an additional, linear diffusion that can be used in the setting of **guided proposals**. It solves the following SDE
 ```math
@@ -17,3 +28,14 @@ and can be called with
 ```julia
 @load_diffusion :SineAux
 ```
+#### Example
+```julia
+@load_diffusion SineAux
+θ = [1.0, 2.0, 8.0, 0.5]
+t, T, y1, vT = 0.0, 20.0, 0.0, 4.0
+P = SineAux(θ..., t, T, y1, vT)
+tt = t:0.001:T
+X = rand(P, tt, y1)
+plot(X)
+```
+![sine_aux](../assets/pred_diff/sine/sine_aux.png)

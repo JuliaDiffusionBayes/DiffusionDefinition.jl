@@ -5,7 +5,7 @@ The package is not registered yet. To install it write:
 ```
 
 ## Defining the process
-To define a diffusion law use a macro `@diffusion_definition`:
+To define a diffusion law use a macro `@diffusion_process`:
 ```julia
 using DiffusionDefinition
 const DD = DiffusionDefinition

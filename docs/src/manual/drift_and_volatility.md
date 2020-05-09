@@ -1,4 +1,5 @@
 # Defining the drift and the volatility coefficient
+--------------------------------------------------------------------------------
 To complete the definition of a diffusion process we need to specify its drift, as well as its volatility coefficient. For the `Lorenz` example from the [previous section](@ref Lorenz_example) we can do this by writing:
 ```julia
 const DD = DiffusionDefinition

@@ -1,11 +1,13 @@
-@diffusion_process Sine begin
+@diffusion_process Sine{T} begin
     :parameters
-    (a, b, c, σ) --> Float64
+    (a, b, c, σ) --> T
 
     :additional
     constdiff --> true
 end
 
-b(t, x, P::Sine) = ℝ{1}(P.a + P.b*sin.(P.c * x))
+DiffusionDefinition.b(t, x, P::Sine) = P.a + P.b*sin(P.c * x)
+DiffusionDefinition.σ(t, x, P::Sine) = P.σ
 
-σ(t, x, P::Sine) = ℝ{1}(P.σ)
+DiffusionDefinition.default_type(::Sine) = Float64
+DiffusionDefinition.default_wiener_type(::Sine) = Float64
