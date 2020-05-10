@@ -12,7 +12,7 @@
     sparsediff --> true
 end
 
-function b(t, x, P::Lorenz)
+function DiffusionDefinition.b(t, x, P::Lorenz)
     @SVector [
         P.p1*(x[2]-x[1]),
         P.p2*x[1] - x[2] - x[1]*x[3],
@@ -20,4 +20,4 @@ function b(t, x, P::Lorenz)
     ]
 end
 
-σ(t, x, P::Lorenz) = SDiagonal(P.σ, P.σ, P.σ)
+DiffusionDefinition.σ(t, x, P::Lorenz) = SDiagonal(P.σ, P.σ, P.σ)

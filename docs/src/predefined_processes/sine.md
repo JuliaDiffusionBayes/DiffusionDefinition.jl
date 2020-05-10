@@ -10,6 +10,9 @@ It can be called with
 
 #### Example
 ```julia
+using DiffusionDefinition
+using Plots
+
 @load_diffusion Sine
 θ = [1.0, 2.0, 8.0, 0.5]
 P = Sine(θ...)
@@ -30,6 +33,9 @@ and can be called with
 ```
 #### Example
 ```julia
+using DiffusionDefinition
+using Plots
+
 @load_diffusion SineAux
 θ = [1.0, 2.0, 8.0, 0.5]
 t, T, y1, vT = 0.0, 20.0, 0.0, 4.0

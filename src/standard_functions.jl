@@ -267,6 +267,19 @@ function end_point_info_names(P::Type{<:DiffusionProcess}) end
 
 end_point_info_names(P::DiffusionProcess) = end_point_info_names(typeof(P))
 
+
+
+"""
+    clone(
+        P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}
+    ) where T <: DiffusionProcess
+
+Clone diffusion law `P` substituting relevant parameters with new values. `ξ` is
+a vector with parameters (possibly more than needed). `ξ` itself can be a
+subvector of a larger vector `ξ°`. The coordinates relevant for `P` are given
+in `θ°idx` and they refer to positions in the larger vector `ξ°`. The
+connection between coordinates in `ξ°` and `ξ` is given in `glob_to_loc`.
+"""
 function clone(P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}) where T <: DiffusionProcess
     p = parameters(P)
     for i in θ°idx

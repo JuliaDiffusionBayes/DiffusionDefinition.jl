@@ -14,8 +14,29 @@ It can be called with
 ```julia
 @load_diffusion :FitzHughNagumo
 ```
+
+#### Example
+```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion FitzHughNagumo
+θ = [0.1, -0.8, 1.5, 0.0, 0.3]
+P = FitzHughNagumo(θ...)
+tt, y1 = 0.0:0.001:30.0, @SVector [-0.9, -1.0]
+X = rand(P, tt, y1)
+plot(X, Val(:vs_time), size=(800, 300))
+```
+![fitzhugh_nagumo_vs_time](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_vs_time.png)
+
+```julia
+plot(X, Val(:x_vs_y))
+```
+![fitzhugh_nagumo_x_vs_y](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_x_vs_y.png)
+
+
 ### Alternative
-The stochastic differential equation above is re-parametrised in such a way that the first coordinate is given by the integrated second coordinate:
+The stochastic differential equation above is re-parametrized in such a way that the first coordinate is given by the integrated second coordinate:
 
 ```math
 \begin{align*}
@@ -27,6 +48,27 @@ The process (with name `FitzHughNagumoAlt`) can be called with
 ```julia
 @load_diffusion :FitzHughNagumoAlt
 ```
+#### Example
+A parameterization equivalent to the above is then given by:
+```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion FitzHughNagumoAlt
+θ = [0.1, -0.8, 1.5, 0.0, 0.3]
+P = FitzHughNagumoAlt(θ...)
+tt, y1 = 0.0:0.001:30.0, @SVector [-0.9, 0.0]
+X = rand(P, tt, y1)
+plot(X, Val(:vs_time), size=(800, 300))
+```
+![fitzhugh_nagumo_vs_time](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_alt_vs_time.png)
+
+```julia
+plot(X, Val(:x_vs_y))
+```
+![fitzhugh_nagumo_x_vs_y](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_alt_x_vs_y.png)
+
+
 ### Conjugate
 It is defined analogously to *alternative* parametrisation above, the only difference being that an additional step is taken of redefining the parameters:
 
@@ -46,7 +88,30 @@ The diffusion (with a struct name `FitzHughNagumoConjug`) can be called with
 ```julia
 @load_diffusion :FitzHughNagumoConjug
 ```
-## Auxiliary diffusions
+
+#### Example
+A parameterization equivalent to the above is then given by:
+```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion FitzHughNagumoConjug
+θ = [10.0, -8.0, 15.0, 0.0, 3.0]
+P = FitzHughNagumoConjug(θ...)
+tt, y1 = 0.0:0.001:30.0, @SVector [-0.7, 0.0]
+X = rand(P, tt, y1)
+plot(X, Val(:vs_time), size=(800, 300))
+```
+![fitzhugh_nagumo_vs_time](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_conjug_vs_time.png)
+
+```julia
+plot(X, Val(:x_vs_y))
+```
+![fitzhugh_nagumo_x_vs_y](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_conjug_x_vs_y.png)
+
+
+
+## Auxiliary diffusions (TODO the code won't execute correctly)
 Additionally, we defined linear diffusions that can be taken as auxiliary processes in the setting of **Guided proposals**. For all of these definitions it is assumed that the target process is observed completely at discrete times. For other observation settings the auxiliary diffusions need to be defined by the user, but the definitions in this package may act as a guide on how to do it.
 
 ### For regular parametrisation

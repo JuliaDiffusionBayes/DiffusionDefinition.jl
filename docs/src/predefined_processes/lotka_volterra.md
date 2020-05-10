@@ -27,7 +27,7 @@ plot(X, Val(:x_vs_y))
 ![lotka_volterra](../assets/pred_diff/lotka_volterra/lotka_volterra.png)
 
 ### Auxiliary diffusion
-We also provide a linear diffusion that is obtained from linearising SDE above at the equilibrium point. This process can be used as an auxiliary diffusion in the setting of **guided proposals**. It solves the following stochastic differential equation
+We also provide a linear diffusion that is obtained from linearizing SDE above at the equilibrium point. This process can be used as an auxiliary diffusion in the setting of **guided proposals**. It solves the following stochastic differential equation
 ```math
 \begin{align*}
 \dd \widetilde{X}_t &= \left(- \frac{\beta\gamma}{\delta} \widetilde{Y}_t + \frac{\gamma\alpha}{\delta}\right) \dd t + \sigma_1 \dd W^{(1)}_t \\

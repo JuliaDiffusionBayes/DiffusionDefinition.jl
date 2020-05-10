@@ -28,3 +28,22 @@ and
 ```math
 C_1 = C, \quad C_2 = 0.8C, \quad C_4 = C_3 = 0.25C.
 ```
+
+Can be imported with
+```julia
+@load_diffusion JansenRit
+```
+
+#### Example
+```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion JansenRit
+θ = [3.25, 100.0, 22.0, 50.0 , 135.0, 5.0, 6.0, 0.56, 0.0, 220.0, 0.0, 0.01, 2000.0, 1.0]
+P = JansenRit(θ...)
+tt, y1 = 0.0:0.0001:3.0, @SVector [0.11, 24, 17, -0.5, 0.0, 0.0]
+X = rand(P, tt, y1)
+plot(X, Val(:vs_time), layout=(3,2), size=(1000,800))
+```
+![jansen_and_rit](../assets/pred_diff/jansen_and_rit/jansen_and_rit.png)

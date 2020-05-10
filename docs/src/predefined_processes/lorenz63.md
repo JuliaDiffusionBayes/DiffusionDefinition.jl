@@ -11,6 +11,20 @@ Can be imported with the following command
 ```julia
 @load_diffusion :Lorenz
 ```
+#### Example
+```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion Lorenz
+θ = [10.0, 28.0, 8.0/3.0, 1.0]
+P = Lorenz(θ...)
+tt, y1 = 0.0:0.001:10.0, @SVector [-10.0, -10.0, 25.0]
+X = rand(P, tt, y1)
+plot(X, Val(:x_vs_y), coords=[1,3])
+```
+![lorenz](../assets/pred_diff/lorenz/lorenz.png)
+
 ### Auxiliary diffusion
 We additionally provide an implementation of a linear diffusion that can be used in a setting of **guided proposals**. It is defined as a solution to the following SDE:
 ```math
@@ -24,3 +38,21 @@ It can be called with
 ```julia
 @load_diffusion :LorenzAux
 ```
+#### Example
+```julia
+@load_diffusion LorenzAux
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion LorenzAux
+θ = [10.0, 28.0, 8.0/3.0, 1.0]
+t, T, vT = 0.0, 10.0, @SVector [-10.0, -10.0, 25.0]
+P = LorenzAux(θ..., t, T, vT)
+tt, y1 = t:0.001:T, vT
+X = rand(P, tt, y1)
+plot(X, Val(:x_vs_y), coords=[1,3])
+```
+![lorenz_aux](../assets/pred_diff/lorenz/lorenz_aux.png)
+
+!!! note
+    Notice the limits of the axes! The auxiliary diffusion becomes an atrocious approximation to the Lorenz system over long time periods!

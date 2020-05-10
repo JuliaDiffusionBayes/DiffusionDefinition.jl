@@ -23,15 +23,15 @@ restrictions
 struct LowerBoundedStateSpace{T,S,N} <: DiffusionStateSpace
 
     function LowerBoundedStateSpace(
-        coords::NTuple{N,Integer},
-        bounds::NTuple{N,Number},
+            coords::NTuple{N,Integer},
+            bounds::NTuple{N,Number},
         ) where N
         new{coords, bounds, N}()
     end
 
     function LowerBoundedStateSpace(
-        coords,
-        bounds,
+            coords,
+            bounds,
         )
         N = length(bounds)
         @assert length(coords) == N
@@ -67,8 +67,8 @@ Upper and lower bounds imposed on the state-space of a diffusion process.
 """
 struct BoundedStateSpace{L,U} <: DiffusionStateSpace
     function BoundedStateSpace(
-        (coords_lower, bounds_lower),
-        (coords_upper, bounds_upper)
+            (coords_lower, bounds_lower),
+            (coords_upper, bounds_upper)
         )
         L = LowerBoundedStateSpace(coords_lower, bounds_lower)
         U = UpperBoundedStateSpace(coords_upper, bounds_upper)
@@ -88,16 +88,16 @@ end
 
 No restrictions, bounds satisfied by default
 """
-@inline bound_satisfied(::UnboundedStateSpace, x) = true
+@inline _bound_satisfied(::UnboundedStateSpace, x) = true
 
 """
     bound_satisfied(::LowerBoundedStateSpace{T,S,N}, x) where {T,S,N}
 
 Checks if all coordinates adhere to lower bound restrictions
 """
-@generated function bound_satisfied(
-    ::LowerBoundedStateSpace{T,S,N},
-    x
+@generated function _bound_satisfied(
+        ::LowerBoundedStateSpace{T,S,N},
+        x
     ) where {T,S,N}
     ex = :(true)
     for i = 1:N
@@ -111,9 +111,9 @@ end
 
 Checks if all coordinates adhere to upper bound restrictions
 """
-@generated function bound_satisfied(
-    ::UpperBoundedStateSpace{T,S,N},
-    x
+@generated function _bound_satisfied(
+        ::UpperBoundedStateSpace{T,S,N},
+        x
     ) where {T,S,N}
     ex = :(true)
     for i = 1:N
@@ -127,14 +127,16 @@ end
 
 Checks if all coordinates adhere to lower and upper bound restrictions
 """
-function bound_satisfied(::BoundedStateSpace{L,U}, x) where {L,U}
-    bound_satisfied(L, x) && bound_satisfied(U, x)
+function _bound_satisfied(::BoundedStateSpace{L,U}, x) where {L,U}
+    _bound_satisfied(L, x) && bound_satisfied(U, x)
 end
 
 function bound_info(::DiffusionProcess{T,DP,DW,SS}) where {T,DP,DW,SS}
     bound_info(SS)
 end
 
-function bound_satisfied(::DiffusionProcess{T,DP,DW,SS}, x) where {T,DP,DW,SS}
-    bound_satisfied(SS, x)
+bound_satisfied(P::DiffusionProcess, x) = _bound_satisfied(P, x)
+
+function _bound_satisfied(::DiffusionProcess{T,DP,DW,SS}, x) where {T,DP,DW,SS}
+    _bound_satisfied(SS, x)
 end

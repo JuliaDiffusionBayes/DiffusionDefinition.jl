@@ -41,7 +41,7 @@ P = OrnsteinUhlenbeck(2.0, 0.0, 0.1)
 X = rand(P, tt, y1)
 ```
 
-## Plotting the process
+## Plotting the trajectories
 Plotting may be done with any supported backend via function `plot`. Plotting recipes are provided which make sure that the output of `rand` (of the datatype `trajectory`) is understood by `plot`. For instance, to plot all diffusion coordinates (in case above only one) against the time variable write
 ```julia
 using Plots

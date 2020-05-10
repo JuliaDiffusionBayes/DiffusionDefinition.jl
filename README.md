@@ -51,7 +51,7 @@ and to see a list of all pre-defined examples call
 ```
 @load_diffusion
 ```
-We additionally provide some functionality for sampling trajectories. For instance, to sample a three-dimensional standard Brownian motion on $$[0,1]$$ use:
+We additionally provide some functionality for sampling trajectories. For instance, to sample a three-dimensional standard Brownian motion on `[0,1]` use:
 ```julia
 tt = 0.0:0.01:1.0
 wiener_path = rand(Wiener(3, Float64), tt)

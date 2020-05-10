@@ -45,6 +45,26 @@ The chemical Langevin equation above has been derived as an approximation to a c
 ```
 with reactant constants given by the vector $\theta$.
 
+Can be imported with
+```julia
+@load_diffusion Prokaryote
+```
+#### Example
+
+```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
+@load_diffusion Prokaryote
+θ, K = [0.1, 0.7, 0.35, 0.2, 0.1, 0.9, 0.3, 0.1], 10.0
+P = Prokaryote(θ..., K)
+tt, y1 = 0.0:0.001:10.0, @SVector [8.0, 8.0, 8.0, 5.0]
+X = rand(P, tt, y1)
+plot(X, Val(:vs_time), label=["RNA" "P" "P₂" "DNA"], size=(800,300))
+```
+![prokaryote](../assets/pred_diff/prokaryote/prokaryote.png)
+
+
 ### Auxiliary diffusion
 We additionally define a linear diffusion that can be used in the setting of **guided proposals**. It is defined as a solution to the following SDE:
 

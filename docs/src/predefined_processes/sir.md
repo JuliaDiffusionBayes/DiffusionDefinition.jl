@@ -13,6 +13,9 @@ with $I_t\in[0,1]$ and $R_t\in[0,1]$ for all $t\in[0,T]$. It can be called with:
 ```
 #### Example
 ```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
 @load_diffusion SIR
 θ = [0.37, 0.05, 0.03, 0.03]
 P = SIR(θ...)
@@ -38,6 +41,9 @@ and can be called with
 
 #### Example
 ```julia
+using DiffusionDefinition
+using StaticArrays, Plots
+
 @load_diffusion SIRAux
 θ = [0.37, 0.05, 0.03, 0.03]
 t, T, vT = 0.0, 5.0, @SVector [0.5, 0.1]

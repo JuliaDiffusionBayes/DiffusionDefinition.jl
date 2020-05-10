@@ -1,11 +1,12 @@
-@diffusion_process FitzHughDiffusionConjug begin
+@diffusion_process FitzHughNagumoConjug{T} begin
     :dimensions
     process --> 2
     wiener --> 1
 
     :parameters
-    (ϵ, s, γ, β, σ) --> Float64
+    (ϵ, s, γ, β, σ) --> T
 
+    #=
     :conjugate
     phi(t, x) -->(
         (-x[2],),
@@ -17,22 +18,21 @@
     )
     nonhypo(x) --> x[2:2]
     num_non_hypo --> 1
+    =#
 
     :additional
     constdiff --> true
 end
 
-function b(t, x, P::FitzHughNagumoConjug)
-    ℝ{2}(
-        x[2],
-        (
-            (P.ϵ - P.γ)*x[1]
-            - P.ϵ*(x[1]^3 + (3.0*x[1]^2 - 1.0)*x[2])
-            + P.s
-            - P.β
-            - x[2]
-        )
+DiffusionDefinition.b(t, x, P::FitzHughNagumoConjug) = @SVector [
+    x[2],
+    (
+        (P.ϵ - P.γ)*x[1]
+        - P.ϵ*(x[1]^3 + (3.0*x[1]^2 - 1.0)*x[2])
+        + P.s
+        - P.β
+        - x[2]
     )
-end
+]
 
-σ(t, x, P::FitzHughNagumoConjug) = ℝ{2}(0.0, P.σ)
+σ(t, x, P::FitzHughNagumoConjug) = @SMatrix [0.0; P.σ]

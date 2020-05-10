@@ -1,28 +1,32 @@
-@diffusion_process LorenzAux begin
+@diffusion_process LorenzAux{K,R} begin
     :dimensions
     process --> 3
     wiener --> 3
 
     :parameters
-    _ --> (3, Float64)
-    (t, T) --> Float64
-    (u, v) --> ℝ{3}
-    σ --> Float64
+    _ --> (3, K)
+    σ --> K
+
+    :auxiliary_info
+    t0 --> Float64
+    T --> Float64
+    vT --> R
 
     :additional
     constdiff --> true
+    linear --> true
 end
 
-B(t, P::LorenzAux) = @SMatrix [
+DiffusionDefinition.B(t, P::LorenzAux) = @SMatrix [
     -P.p1         P.p1        0.0;
-     P.p2-P.v[3]  -1.0    -P.v[1];
-     P.v[2]      P.v[1]    -P.p3
+     P.p2-P.vT[3]  -1.0    -P.vT[1];
+     P.vT[2]      P.vT[1]    -P.p3
 ]
 
-β(t, P::LorenzAux) = ℝ{3}(
+DiffusionDefinition.β(t, P::LorenzAux) = @SVector[
     0.0,
-    P.v[1]*P.v[3],
-    -P.v[1]*P.v[3]
-)
+    P.vT[1]*P.vT[3],
+    -P.vT[1]*P.vT[3]
+]
 
-σ(t, P::LorenzAux) = SDiagonal(P.σ, P.σ, P.σ)
+DiffusionDefinition.σ(t, P::LorenzAux) = SDiagonal(P.σ, P.σ, P.σ)
