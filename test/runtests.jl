@@ -125,14 +125,14 @@ end
 
     a = [-1,0,1.0,4.0]
     v = [-1,0,1.0,20.0]
-    @test DD.bound_satisfied(nb, a)
-    @test !DD.bound_satisfied(lb, a)
-    @test DD.bound_satisfied(ub, a)
-    @test !DD.bound_satisfied(b, a)
-    @test DD.bound_satisfied(nb, v)
-    @test !DD.bound_satisfied(lb, v)
-    @test DD.bound_satisfied(ub, v)
-    @test !DD.bound_satisfied(b, v)
+    @test DD._bound_satisfied(nb, a)
+    @test !DD._bound_satisfied(lb, a)
+    @test DD._bound_satisfied(ub, a)
+    @test !DD._bound_satisfied(b, a)
+    @test DD._bound_satisfied(nb, v)
+    @test !DD._bound_satisfied(lb, v)
+    @test DD._bound_satisfied(ub, v)
+    @test !DD._bound_satisfied(b, v)
 end
 
 @testset "utility functions" begin
