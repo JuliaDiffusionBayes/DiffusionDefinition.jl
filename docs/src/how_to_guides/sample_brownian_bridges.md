@@ -1,4 +1,4 @@
-# How to sample Brownian bridges?
+# [How to sample Brownian bridges?](@id how_to_guides)
 Brownian bridge is a Brownian motion conditioned to hit a pre-specified end-point.
 
 ## Approximate bridges

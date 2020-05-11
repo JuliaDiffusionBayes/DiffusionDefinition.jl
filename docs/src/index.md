@@ -6,6 +6,8 @@ This is a compact utility package for defining diffusion processes and sampling 
 - compute functionals of sampled paths
 - compute gradients of functionals of sampled paths with respect to diffusion parameters or with respect to the starting point of the trajectory
 
+------------------------
+
 Depending on your intended use of this package you might choose to start at different places:
 
 - For a quick overview of [DiffusionDefinition.jl](https://juliadiffusionbayes.github.io/DiffusionDefinition.jl/dev/)'s main functionality see [Get started](@ref get_started).
