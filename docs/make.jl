@@ -36,7 +36,7 @@ makedocs(;
         "How to..." => Any[
             "(TODO) How to compute expectation of gradients of functionals" => joinpath("how_to_guides", "expect_of_gradient.md"),
             "(TODO) How to compute higher order derivatives of functionals" => joinpath("how_to_guides", "higher_order_derivatives.md"),
-            "(TODO) How to sample Brownian bridges" => joinpath("how_to_guides", "sample_brownian_bridges.md"),
+            "How to sample Brownian bridges" => joinpath("how_to_guides", "sample_brownian_bridges.md"),
             "(TODO) How to sample Diffusion bridges" => joinpath("how_to_guides", "sample_diffusion_bridges.md"),
             "(TODO) How to customize my diffusion plots" => joinpath("how_to_guides", "customize_my_diffusion_plots.md"),
         ],
