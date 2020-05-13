@@ -151,7 +151,11 @@ value(x::SVector{N,ForwardDiff.Dual{K,T,M}}) where {N,K,T,M} = SVector{N,T}(
 )
 value!(y, x::AbstractArray{<:ForwardDiff.Dual}) = map!(x->x.value, y, x)
 
-@inline _DEFAULT_F(args...) = nothing
+struct _DEFAULT_F end
+const __DEFAULT_F = _DEFAULT_F()
+Base.getindex(f::_DEFAULT_F, i::Int) = f
+Base.setindex!(f::_DEFAULT_F, v, i::Int) = nothing
+@inline (::_DEFAULT_F)(args...) = nothing
 const _FINAL = Val(:final)
 
 """
@@ -162,7 +166,7 @@ from the sampled Wiener process `WW`. Save the sampled path in `XX`. Return
 prematurely with a `false` massage if the numerical scheme has led to the solver
 violating the state-space restrictions.
 """
-function solve!(XX, WW, P, y1; f::Function=_DEFAULT_F)
+function solve!(XX, WW, P, y1; f=__DEFAULT_F)
     solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1; f=f)
 end
 
@@ -172,13 +176,13 @@ end
 Same as `solve!(XX, WW, P, y1)`, but additionally provides a pre-allocated
 buffer for performing in-place computations.
 """
-function solve!(XX, WW, P, y1, buffer; f::Function=_DEFAULT_F)
+function solve!(XX, WW, P, y1, buffer; f=__DEFAULT_F)
     solve!(EulerMaruyama(), ismutable(XX), XX, WW, P, y1, buffer; f=f)
 end
 
 function solve!(
         ::EulerMaruyama, ::Val{false}, XX, WW, P, y1::Ky1;
-        f::Function=_DEFAULT_F
+        f=__DEFAULT_F
     ) where Ky1
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
@@ -204,7 +208,7 @@ end
 function solve!(
         ::EulerMaruyama, ::Val{true}, XX, WW, P, y1::K,
         buffer=StandardEulerBuffer{K}(P);
-        f::Function=_DEFAULT_F
+        f=__DEFAULT_F
     ) where K
     yy, ww, tt = XX.x, WW.x, XX.t
     N = length(XX)
@@ -268,7 +272,7 @@ end
         Sampling Diffusion processes using the Euler Maruyama scheme
 ===============================================================================#
 
-function Base.rand(P::DiffusionProcess, tt, y1=zero(P); f=_DEFAULT_F)
+function Base.rand(P::DiffusionProcess, tt, y1=zero(P); f=__DEFAULT_F)
     rand(Random.GLOBAL_RNG, P, tt, y1, ismutable(y1); f=f)
 end
 
@@ -278,11 +282,11 @@ function Base.rand(
         tt,
         y1::K,
         v::Val{true};
-        f=_DEFAULT_F
+        f=__DEFAULT_F
     ) where {T,DP,DW,K}
     Wnr = Wiener{DW}()
     w0 = zeros(eltype(y1), DW)
-    WW = rand(rng, Wnr, tt, w0)
+    WW = trajectory(tt, typeof(w0), DW, v) #rand(rng, Wnr, tt, w0) # it samples wiener twice
     XX = trajectory(tt, K, DP, v)
     success, f_accum = false, nothing
     buffer = StandardEulerBuffer{K}(P)
@@ -290,7 +294,7 @@ function Base.rand(
         rand!(rng, Wnr, WW, w0)
         success, f_accum = solve!(XX, WW, P, y1, buffer; f=f)
     end
-    typeof(f) != typeof(_DEFAULT_F) && return XX, f_accum
+    typeof(f) != _DEFAULT_F && return XX, f_accum
     XX
 end
 
@@ -302,7 +306,7 @@ function Base.rand(
         tt,
         y1::K,
         v::Val{false};
-        f=_DEFAULT_F
+        f=__DEFAULT_F
     ) where {T,DP,DW,K}
     w0 = (
         default_wiener_type(P) <: Number ?
@@ -310,14 +314,14 @@ function Base.rand(
         zero(similar_type(K, Size(DW)))
     )
     Wnr = Wiener()
-    WW = rand(rng, Wnr, tt, w0)
+    WW = trajectory(tt, typeof(w0), DW, v) #rand(rng, Wnr, tt, w0)
     XX = trajectory(tt, K, DP, v)
     success, f_accum = false, nothing
     while !success
         rand!(rng, Wnr, WW, w0)
         success, f_accum = solve!(XX, WW, P, y1; f=f)
     end
-    typeof(f) != typeof(_DEFAULT_F) && return XX, f_accum
+    typeof(f) != _DEFAULT_F && return XX, f_accum
     XX
 end
 

@@ -43,6 +43,7 @@ makedocs(;
         ],
         "Tutorials" => Any[
             "(TODO) Sampling Lorenz system" => joinpath("tutorials", "simple_lorenz.md"),
+            "(TODO) In-place vs out-of-place methods" => joinpath("tutorials", "in_place_vs_out_of_place.md"),
         ],
         "Predefined Diffusions" => Any[
             "Lotka-Volterra system" => joinpath("predefined_processes", "lotka_volterra.md"),
