@@ -283,7 +283,7 @@ connection between coordinates in `ξ°` and `ξ` is given in `glob_to_loc`.
 function clone(P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}) where T <: DiffusionProcess
     p = parameters(P)
     for i in θ°idx
-        p[i.pname] = ξ[glob_to_loc[i.global_idx]]
+        haskey(p, i.pname) && (p[i.pname] = ξ[glob_to_loc[i.global_idx]])
     end
     remove_curly(T)(;p...)
 end
