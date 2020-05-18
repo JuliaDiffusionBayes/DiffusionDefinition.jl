@@ -280,12 +280,26 @@ subvector of a larger vector `ξ°`. The coordinates relevant for `P` are given
 in `θ°idx` and they refer to positions in the larger vector `ξ°`. The
 connection between coordinates in `ξ°` and `ξ` is given in `glob_to_loc`.
 """
-function clone(P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}) where T <: DiffusionProcess
+function clone(
+        P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}
+    ) where T <: DiffusionProcess
     p = parameters(P)
     for i in θ°idx
         haskey(p, i.pname) && (p[i.pname] = ξ[glob_to_loc[i.global_idx]])
     end
     remove_curly(T)(;p...)
+end
+
+"""
+    clone(P::T, θ) where T <: DiffusionProcess
+
+Simplified cloning of diffusion law `P`. Substitute relevant parameters with
+new values. `θ` must be a dict corresponding to parameters returned after a call
+to `var_parameters`.
+"""
+function clone(P::T, θ) where T <: DiffusionProcess
+    cp = const_parameters(P)
+    remove_curly(T)(;cp..., θ...)
 end
 
 function clone(P::DiffusionProcess, ξ, θ°idx, ::Val{:associate_by_position})

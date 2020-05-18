@@ -1,29 +1,29 @@
-@diffusion_process FitzHughDiffusionAux begin
+@diffusion_process FitzHughNagumoAux{K,R} begin
     :dimensions
     process --> 2
     wiener --> 1
 
     :parameters
-    (ϵ, s, γ, β, σ, t, T) --> Float64
-    (u, v) --> ℝ{2}
+    (ϵ, s, γ, β, σ) --> K
+
+    :auxiliary_info
+    t0 --> Float64
+    T --> Float64
+    vT --> R
 
     :additional
     constdiff --> true
     linear --> true
 end
 
-function B(t, P::FitzHughDiffusionAux)
-    @SMatrix [
-        1/P.ϵ-3*P.v^2/P.ϵ   -1/P.ϵ;
-        P.γ                 -1.0
-    ]
-end
+B(t, P::FitzHughNagumoAux) = @SMatrix [
+    1/P.ϵ-3*P.vT[1]^2/P.ϵ   -1/P.ϵ;
+    P.γ                 -1.0
+]
 
-function β(t, P::FitzHughDiffusionAux)
-    ℝ{2}(
-        P.s/P.ϵ+2*P.v^3/P.ϵ,
-        P.β
-    )
-end
+β(t, P::FitzHughNagumoAux) = @SVector [
+    P.s/P.ϵ+2*P.vT[1]^3/P.ϵ,
+    P.β
+]
 
-σ(t, P::FitzHughDiffusionAux) = ℝ{2}(0.0, P.σ)
+σ(t, P::FitzHughNagumoAux) = @SVector [0.0, P.σ]
