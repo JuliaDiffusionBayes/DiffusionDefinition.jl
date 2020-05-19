@@ -3,8 +3,7 @@
     process --> 6
     wiener --> 1
     :parameters
-    #(a, b, σy) --> K
-    (A, a, B, b, C, α1, α2, νmax, v, r, μy, σy) --> K
+    (a, b, σy) --> K
     :auxiliary_info
     t0 --> Float64
     T --> Float64
