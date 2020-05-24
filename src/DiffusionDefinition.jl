@@ -18,6 +18,7 @@ module DiffusionDefinition
     include("buffer.jl")
     include("trajectories_extensions.jl")
     include("sampling.jl")
+    include("reparameterizations.jl")
 
     export @diffusion_process
     export @load_diffusion

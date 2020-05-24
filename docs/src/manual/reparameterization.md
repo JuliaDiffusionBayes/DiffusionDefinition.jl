@@ -1,9 +1,11 @@
 # Reparameterizations
-Instances of `DiffusionProcess` are immutable, and usually, so are their fields with parameters. Consequently, reparameterizations almost always involve constructing new objects.
-
-In an MCMC setting reparameterizations of diffusion laws happen very frequently and thus we provide a convenience function suitable for that setting:
+Instances of `DiffusionProcess` are **mutable** so their fields may be changed directly. We provide additional convenience functions for reparameterizations. The first one clones the object and creates a new one with new parameters:
 ```@docs
 DiffusionDefinition.clone
 ```
+However, it's not recommended to rely on it and it will become deprecated in the near future.
 
-[TODO make it less convoluted]
+A more efficient function, suitable for the MCMC setting is:
+```@docs
+DiffusionDefinition.set_parameters!
+```

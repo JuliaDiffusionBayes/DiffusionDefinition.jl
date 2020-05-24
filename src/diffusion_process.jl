@@ -840,7 +840,7 @@ function createstruct(abstract_type, p)
     ) # constructor
 
     struct_def = Expr(:struct,
-        false, # immutable
+        true, # immutable
         Expr(:<:,
             p.curly_name,
             abstract_type,

@@ -140,6 +140,7 @@ end
     @test DD.get_curly(Vector{Float64}) == (:Float64, 1)
 end
 
+
 @testset "Buffers" begin
     d, m = 4,5
     el = Float64
@@ -229,16 +230,9 @@ end
     DD.end_point_info_names(P_aux)
     DD.end_point_info(P_aux)
 
-    DD.clone(
-        P_target,
-        [10.0, 20.0, 30.0, 40.0],
-        Dict(2=>2, 4=>4),
-        [
-            (global_idx=2, pname=:δ),
-            (global_idx=4, pname=:α)
-        ],
-        Val(:associate_by_name)
-    )
+    DD.set_parameters!(P_target, [10.0, 20.0, 30.0, 40.0], [2=>:δ, 4=>:α])
+    @test P_target.δ == 20.0
+    @test P_target.α == 40.0
 end
 
 

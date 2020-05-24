@@ -191,22 +191,6 @@ matrix
 """
 sparseBmat(P::DiffusionProcess) = false
 
-
-#=
-"""
-    clone(P::T, args...)
-
-Instantiate a new diffusion process of the same type as `P` but with new
-arguments `args`.
-"""
-clone(P::T, args...) where T<:DiffusionProcess = T(args...)
-
-function update_params(P::T, new_params...) where T<:DiffusionProcess
-    ei = end_point_info(P)
-    ei === nothing ? T(new_params...) : T(new_params..., ei...)
-end
-=#
-
 Base.zero(P::DiffusionProcess) = zero(P, Val(:process))
 
 """
@@ -267,44 +251,6 @@ function end_point_info_names(P::Type{<:DiffusionProcess}) end
 
 end_point_info_names(P::DiffusionProcess) = end_point_info_names(typeof(P))
 
-
-
-"""
-    clone(
-        P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}
-    ) where T <: DiffusionProcess
-
-Clone diffusion law `P` substituting relevant parameters with new values. `ξ` is
-a vector with parameters (possibly more than needed). `ξ` itself can be a
-subvector of a larger vector `ξ°`. The coordinates relevant for `P` are given
-in `θ°idx` and they refer to positions in the larger vector `ξ°`. The
-connection between coordinates in `ξ°` and `ξ` is given in `glob_to_loc`.
-"""
-function clone(
-        P::T, ξ, glob_to_loc, θ°idx, ::Val{:associate_by_name}
-    ) where T <: DiffusionProcess
-    p = parameters(P)
-    for i in θ°idx
-        haskey(p, i.pname) && (p[i.pname] = ξ[glob_to_loc[i.global_idx]])
-    end
-    remove_curly(T)(;p...)
-end
-
-"""
-    clone(P::T, θ) where T <: DiffusionProcess
-
-Simplified cloning of diffusion law `P`. Substitute relevant parameters with
-new values. `θ` must be a dict corresponding to parameters returned after a call
-to `var_parameters`.
-"""
-function clone(P::T, θ) where T <: DiffusionProcess
-    cp = const_parameters(P)
-    remove_curly(T)(;cp..., θ...)
-end
-
-function clone(P::DiffusionProcess, ξ, θ°idx, ::Val{:associate_by_position})
-    error("not implemented")
-end
 
 #custom_zero(D::Integer, ::Type{K}) where K <: Array = zeros(eltype(K), D)
 #custom_zero(D::Integer, ::Type{K}) where K = zero(K)
