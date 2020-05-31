@@ -6,22 +6,18 @@
     :parameters
     (ϵ, s, γ, β, σ) --> T
 
-    #=
-    :conjugate
-    phi(t, x) -->(
-        (-x[2],),
-        (x[1]-x[1]^3+(1-3*x[1]^2)*x[2],),
-        (one(x[1]),),
-        (-x[1],),
-        (zero(x[1]),),
-        (zero(x[1]),),
-    )
-    nonhypo(x) --> x[2:2]
-    num_non_hypo --> 1
-    =#
-
     :additional
     constdiff --> true
+end
+
+@conjugate_gaussian FitzHughNagumoConjug begin
+    :intercept --> (-x[2],)
+    :ϵ --> (x[1]-x[1]^3+(1-3*x[1]^2)*x[2],)
+    :s --> (one(x[1]),)
+    :γ --> (-x[1],)
+    :β --> (-one(x[1]),)
+    :hypo_a_inv --> 1.0/P.σ^2
+    :nonhypo --> 2:2
 end
 
 DiffusionDefinition.b(t, x, P::FitzHughNagumoConjug) = @SVector [

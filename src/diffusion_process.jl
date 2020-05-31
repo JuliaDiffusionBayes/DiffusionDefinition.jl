@@ -117,7 +117,7 @@ macro diffusion_process(name, ex::Expr, p...)
 end
 
 """
-    load_diffusion()
+    @load_diffusion
 
 Displays available choices of predefined diffusion processes that can be loaded
 """
@@ -132,7 +132,7 @@ macro load_diffusion()
 end
 
 """
-    load_diffusion(name)
+    @load_diffusion name
 
 Loads the predefined diffusion process.
 """

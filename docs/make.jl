@@ -32,6 +32,7 @@ makedocs(;
             "Buffers" => joinpath("manual", "buffers.md"),
             "State space restrictions" => joinpath("manual", "state_space.md"),
             "Reparameterizations" => joinpath("manual", "reparameterization.md"),
+            "Conjugate updates" =>joinpath("manual", "conjugate_updates.md"),
         ],
         "How to..." => Any[
             "How to sample Brownian bridges" => joinpath("how_to_guides", "sample_brownian_bridges.md"),

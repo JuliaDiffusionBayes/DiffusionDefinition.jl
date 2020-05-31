@@ -69,7 +69,7 @@ plot(X, Val(:x_vs_y))
 ![fitzhugh_nagumo_x_vs_y](../assets/pred_diff/fitzhugh_nagumo/fitzhugh_nagumo_alt_x_vs_y.png)
 
 
-### Conjugate
+### [Conjugate](@id conjugate_fitzhugh_nagumo)
 It is defined analogously to *alternative* parametrisation above, the only difference being that an additional step is taken of redefining the parameters:
 
 ```math

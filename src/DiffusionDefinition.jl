@@ -19,10 +19,12 @@ module DiffusionDefinition
     include("trajectories_extensions.jl")
     include("sampling.jl")
     include("reparameterizations.jl")
+    include("conjugate_updates.jl")
 
     export @diffusion_process
     export @load_diffusion
     export @load_variable_diffusion
+    export @conjugate_gaussian
 
     export UnboundedStateSpace, LowerBoundedStateSpace, UpperBoundedStateSpace,
         BoundedStateSpace

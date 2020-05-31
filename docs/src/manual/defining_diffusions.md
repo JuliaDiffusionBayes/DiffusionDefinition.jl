@@ -13,12 +13,11 @@ end
 the snippet of code above creates a struct named `NAME` according to specifications listed in the `RECIPE`.
 
 ## Customisation of a struct
-The `RECIPE` may contain information pertinent to six distinct categories:
+The `RECIPE` may contain information pertinent to five distinct categories:
 - Specification of `:dimensions`
 - Specification of `:parameters` (their names and datatypes)
 - Specification of `:constant_parameters` (their names and datatypes)
 - Specification of `:auxiliary_info`
-- Specification of `:conjugate` updates (to be deprecated and substituted with something else)
 - `:additional` information
 Each type needs to be announced to `julia` by starting the list with the corresponding `Symbol` (or `QuoteNode`).
 
@@ -175,16 +174,7 @@ Each one of these fields can be defined in a format `field-name --> field-type` 
 !!! note "Alternative keywords"
     `auxiliary_info` keyword alternatives: `:aux_info`, `:end_points`, `:end_point_info`
 
-#### Category 5: `:conjugate`
-!!! warning
-    This section will soon become deprecated and substituted with something more fitting.
-
-This is a section that needs to be present if conjugate Gaussian updates are to be made in the setting of Bayesian inference in the package [DiffusionMCMC.jl](https://github.com/JuliaDiffusionBayes/DiffusionMCMC.jl). Three pieces of information can be specified:
-- Function `phi`
-- Function `nonhypo` in a format `nonhypo(x) --> non-smooth-coordinates-of-x` which specifies which coordinates of `x` have non-degenerate noise on them.
-- `num_non_hypo` which specifies how many coordinates are with non-degenerate noise on them [**TODO** change to a simple count of `nonhypo` output length].
-
-#### Category 6: `:additional`
+#### Category 5: `:additional`
 The additional information provides some additional decorators that helps the compiler use specialized functions when called on instances of corresponding diffusion processes. The following information can be specified
 - `constdiff --> true` (or `false`) depending on whether the volatility coefficient is independent from the state variable (`false` by default).
   - Alternative keywords: `:constvola`, `:constdiffusivity`, `:constvolatility`, `:constσ`, `:constantdiff`, `:constantvola`, `:constantdiffusivity`, `:constantvolatility`, `:constantσ`.
