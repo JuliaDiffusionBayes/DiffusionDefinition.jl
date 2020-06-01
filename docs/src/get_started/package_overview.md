@@ -36,9 +36,9 @@ DD.default_wiener_type(::OrnsteinUhlenbeck) = Float64
 ## Sampling trajectories under the diffusion law
 Use the function `rand` to sample the process
 ```julia
-tt, y1 = 0.0:0.01:100.0, 0.0
+tt, x0 = 0.0:0.01:100.0, 0.0
 P = OrnsteinUhlenbeck(2.0, 0.0, 0.1)
-X = rand(P, tt, y1)
+X = rand(P, tt, x0)
 ```
 
 ## Plotting the trajectories
@@ -65,13 +65,15 @@ DD.solve!(X, W, P, x0)
 ```
 Sampling trajectories multiple times becomes very efficient then, for instance:
 ```julia
-julia> using BenchmarkTools
-julia> @btime begin
+julia> function foo(Wnr, W, X, P, x0)
            for _ in 1:10^4
                rand!(Wnr, W)
                DD.solve!(X, W, P, x0)
            end
        end
-  1.840 s (10000 allocations: 156.25 KiB)
+foo (generic function with 1 method)
+julia> using BenchmarkTools
+julia> foo($Wnr, $W, $X, $P, $x0)
+  1.840 s (0 allocations: 0 bytes)
 ```
-i.e. `2`s to sample `10 000` trajectories, each revealed on a time-grid with `10 001` points (tested on an Intel(R) Core(TM) i7-4600U CPU @ 2.10GHz). Note that sampling does only one allocation per call (which is due to return of a value by `solve!`).
+i.e. $2$ seconds to sample $10\, 000$ trajectories, each revealed on a time-grid with $10\, 001$ points (tested on an Intel(R) Core(TM) i7-4600U CPU @ 2.10GHz).

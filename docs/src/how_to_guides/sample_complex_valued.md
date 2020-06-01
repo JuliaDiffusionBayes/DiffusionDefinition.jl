@@ -1,7 +1,9 @@
 # How to sample complex-valued diffusions?
+***
 From the perspective of internal mechanics of the package there is nothing special about complex valued processes. You simply need to make sure that you define the process with appropriate datatype, say `ComplexF64`.
 
 ## Example
+----
 The logo of this package was sampled using a complex-valued diffusion that has a mean reversion term that attracts the process towards a point that zooms around a unit circle on a complex plane:
 ```julia
 using DiffusionDefinition

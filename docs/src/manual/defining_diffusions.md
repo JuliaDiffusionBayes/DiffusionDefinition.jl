@@ -59,6 +59,7 @@ end
 which defines a [parametric type](https://docs.julialang.org/en/v1/manual/types/#Parametric-Types-1) `Lorenz{T}`, together with some handy auxiliary functions specific to any instance of `Lorenz{T}`. We may now instantiate the newly defined struct as in
 ```julia
 P_f64 = Lorenz(10.0, 28.0, 8.0/3.0, 0.2)
+# or
 P_f32 = Lorenz(10.0f0, 28.0f0, 8.0f0/3.0f0, 0.2)
 ```
 We can also call some functions that were auto-generated for the newly defined `Lorenz` struct, for instance
@@ -67,7 +68,7 @@ DD.parameter_names(Lorenz) == (:p1, :p2, :p3, :σ)
 DD.parameter_names(P_f64) == (:p1, :p2, :p3, :σ)
 DD.parameters(P_f64) == Dict(:p1 => 10.0, :p2 => 28.0, :p3 => 8.0/3.0, :σ => 0.2)
 ```
-More functions are automatically defined in the background for each generated `DiffusionProcess`, to learn more about them see [Convenience Functions](@ref utility_functions).
+More functions are automatically defined in the background for each generated `DiffusionProcess`, to learn more about them see the list of [Utility Functions](@ref utility_functions).
 
 # Systematic explanations
 --------------------------------------------------------------------------------
@@ -126,7 +127,7 @@ DiffusionDefinition.const_parameter_names
 DiffusionDefinition.var_parameter_names
 ```
 !!! note
-    The split into `constant` and `variable` parameters is not done at a compile time and can also be done by hand after the `struct` with the diffusion has been constructed (though, it is discouraged). For instance, in the `Lorenz` example above we have:
+    The split into `constant` and `variable` parameters is not done at a compile time and can also be done by hand after the `struct` with the diffusion has been constructed. For instance, in the `Lorenz` example above we have:
 
     ```julia
     julia> DD.parameters(P_f64)

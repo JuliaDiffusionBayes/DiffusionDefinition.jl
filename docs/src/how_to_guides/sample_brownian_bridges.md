@@ -1,7 +1,9 @@
 # [How to sample Brownian bridges?](@id how_to_guides)
+***
 Brownian bridge is a Brownian motion conditioned to hit a pre-specified end-point.
 
 ## Approximate bridges
+----
 One way to sample Brownian bridges relies on an unconditioned SDE that describes the dynamics of a Brownian bridge (conditioned to hit $$x_T\in\RR^d$$).
 ```math
 \dd X_t = \frac{x_T-X_t}{T-t}\dd t + \dd W_t,\qquad X_0=x_0\qquad t\in[0,T].
@@ -41,6 +43,7 @@ display(p)
     Bridges above rely on the Euler–Maruyama scheme and are thus burdened with an approximation error. To sample Brownian bridges devoid of any errors (without sacrificing any performance) use the method below.
 
 ## Exact bridges
+----
 A preferred way of sampling Brownian bridges relies on a second identity that connects distributions of
 1. `W`—a Brownian motion on $$[0,T]$$ started from $$0$$, and
 2. `B`—a Brownian bridge on $$[0,T]$$ connecting $$x_0$$ and $$x_T$$:

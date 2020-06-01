@@ -51,7 +51,7 @@ end
 θ° = @SVector[10.0, 28.0, 8.0/3.0, 1.0]
 tt = 0.0:0.001:10.0
 y1 = @SVector [-10.0, -10.0, 25.0]
-X, W = trajectory(P, tt)
+X, W = trajectory(tt, P)
 rand!(Wiener(), W)
 # gradient preparation
 y1_θ_type = similar_type(θ°, Dual{Tag{typeof(foobar),eltype(y1)},eltype(y1),length(θ)}, Size(y1))
