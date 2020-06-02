@@ -269,6 +269,41 @@ end
 =#
 
 #===============================================================================
+            Computing Wiener path reproducing given trajectory
+===============================================================================#
+
+function invsolve!(XX, WW, P)
+    invsolve!(EulerMaruyama(), ismutable(XX), XX, WW, P)
+end
+
+function invsolve!(XX, WW, P, buffer)
+    invsolve!(EulerMaruyama(), ismutable(XX), XX, WW, P, buffer)
+end
+
+function invsolve!(::EulerMaruyama, ::Val{false}, XX, WW, P)
+    yy, ww, tt = XX.x, WW.x, XX.t
+    N = length(XX)
+
+    ww[N] = zero(ww[N])
+
+    for i in N-1:-1:1
+        yᵢ₊₁ = yy[i+1]
+        yᵢ = yy[i]
+        dt = tt[i+1] - tt[i]
+
+        ww[i] = ww[i+1] - (
+            nonhypo_σ((tt[i], i), yᵢ, P)\
+            nonhypo(yᵢ₊₁ - yᵢ - _b((tt[i], i), yᵢ, P)*dt, P)
+        )
+    end
+    for i in N:-1:1
+        ww[i] = ww[i] - ww[1]
+    end
+    WW
+end
+
+
+#===============================================================================
         Sampling Diffusion processes using the Euler Maruyama scheme
 ===============================================================================#
 

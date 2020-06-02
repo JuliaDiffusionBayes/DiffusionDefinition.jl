@@ -159,6 +159,9 @@ _σ((t,i)::IndexedTime, x, P::DiffusionProcess) = σ(t, x, P)
 _b!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = b!(buffer, t, x, P)
 _σ!(buffer, (t,i)::IndexedTime, x, P::DiffusionProcess) = σ!(buffer, t, x, P)
 
+nonhypo_σ((t,i)::IndexedTime, x, P::DiffusionProcess) = nonhypo_σ(t, x, P)
+
+
 """
     diagonaldiff(P::DiffusionProcess)
 

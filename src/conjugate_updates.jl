@@ -50,7 +50,10 @@ Return the diffusion's coordinates that have direct contribution from some
 non-degenerate Wiener terms, i.e. leave out coordinates whose Wiener term is
 zero.
 """
-nonhypo(x, P) = error("not implemented")
+nonhypo(x, P) = x
+
+#TODO this is needed for the inverse solve!:
+nonhypo_σ(t::Float64, x, P) = σ(t, x, P)
 
 """
     ignore_for_cu(::Val{T}, P) where T
