@@ -20,7 +20,7 @@ DD = DiffusionDefinition
         :aux_info
         T --> Float64
         vT --> SArray{Tuple{4},Float64,1,4}
-
+        #=
         :conjugate
         phi(t, u) --> (
             (p1*u[2]*(u[2]-1),u[1],u[1]),
@@ -28,7 +28,7 @@ DD = DiffusionDefinition
         )
         nonhypo(x) --> x
         num_non_hypo --> 3
-
+        =#
         :additional
         statespace --> LowerBoundedStateSpace((1,2,3), (0.0, 1.0, 0.0))
         constdiff --> false
@@ -41,7 +41,7 @@ DD = DiffusionDefinition
     end_point_info_tuple = (1.0, (@SVector [1.0, 2.0, 3.0, 4.0]))
     P = TestDiffusion(param_tuple..., end_point_info_tuple...)
 
-    @test DD.nonhypo(P, :x) == :x
+    @test DD.nonhypo(:x, P) == :x
     @testset "satisfying bounds" begin
         @test !DD.bound_satisfied(P, [0.1, 2.0, 0.0])
         @test DD.bound_satisfied(P, [0.1, 2.0, 0.1])
@@ -52,7 +52,7 @@ DD = DiffusionDefinition
     @test !(typeof(P) <: DD.LinearDiffusion)
     @test eltype(P) == Float64
 
-    param_names = (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta, :T, :vT, :xT)
+    param_names = (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta, :T, :vT)
     @test DD.parameter_names(P) == param_names
     #TODO introduce this back ?
     #@test DD.parameter_names(typeof(P)) == (:p1, :p2, :p3, :param, :stem1, :stem2, :theta, :alpha, :beta, :gamma, :yota, :zeta)
@@ -61,12 +61,11 @@ DD = DiffusionDefinition
     for p in keys(params_should)
         @test params_is[p] == params_should[p]
     end
-    @test DD.end_point_info_names(P) == (:T, :vT, :xT)
+    @test DD.end_point_info_names(P) == (:T, :vT)
     epi_is = DD.end_point_info(P)
     epi_should = Dict(
         :T=>end_point_info_tuple[1],
         :vT=>end_point_info_tuple[2],
-        :xT=>(@SVector [0.0, 0.0, 0.0])
     )
     for p in keys(epi_should)
         @test epi_is[p] == epi_should[p]
@@ -91,25 +90,24 @@ DD = DiffusionDefinition
 
     P = TestDiffusion2(param_tuple..., end_point_info_tuple...)
 
-    @test DD.parameter_names(P) == (:p1, :p2, :p3, :T, :vT, :xT)
+    @test DD.parameter_names(P) == (:p1, :p2, :p3, :T, :vT)
 
     params_is = DD.parameters(P)
     params_should = Dict(:p1 => 1.0, :p2 => 2.0, :p3 => 3.0, :T => 1.0, :vT => (@SVector [1.0, 2.0, 3.0, 4.0]))
     for p in keys(params_should)
         @test params_is[p] == params_should[p]
     end
-    @test DD.end_point_info_names(P) == (:T, :vT, :xT)
+    @test DD.end_point_info_names(P) == (:T, :vT)
     epi_is = DD.end_point_info(P)
     epi_should = Dict(
         :T=>end_point_info_tuple[1],
         :vT=>end_point_info_tuple[2],
-        :xT=>(@SVector [0.0, 0.0, 0.0])
     )
     for p in keys(epi_should)
         @test epi_is[p] == epi_should[p]
     end
     P1 = TestDiffusion2(1.0, 1.0, 1.0, end_point_info_tuple...)
-    P2 = TestDiffusion2(1.0, 1.0, 1.0, 1.0, (@SVector [1.0, 1.0, 1.0, 1.0]), (@SVector [1.0, 1.0, 1.0]))
+    P2 = TestDiffusion2(1.0, 1.0, 1.0, 1.0, (@SVector [1.0, 1.0, 1.0, 1.0]))
 
     #@test DD.update_params(P, [1.0, 1.0, 1.0]...) == P1
 
@@ -194,7 +192,7 @@ end
 
     p_names = (:α, :β, :γ, :δ, :σ1, :σ2)
     pars = Dict([pn=>p for (pn,p) in zip(p_names,θ)])
-    ep_names = (:t0, :T, :vT, :xT)
+    ep_names = (:t0, :T, :vT)
 
     @test DD.parameter_names(LotkaVolterra) == p_names
     @test DD.parameter_names(P_target) == p_names
@@ -260,7 +258,7 @@ end
     α, β, γ, δ, σ1, σ2 = 2.0/3.0, 4.0/3.0, 1.0, 1.0, 0.2, 0.3
     lv_aux = LotkaVolterraAux(
         α, β, γ, δ, σ1, σ2,
-        0.0, 1.0, zero(DD.ℝ{2}), zero(DD.ℝ{2})
+        0.0, 1.0, zero(DD.ℝ{2})
     )
     N, dt, T = 2, 0.0001, 1000.0
     tt = collect(0.0:dt:T)
