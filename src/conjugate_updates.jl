@@ -43,7 +43,7 @@ $(\hat{σ} \hat{σ}^T)^{-1}$ is computed.
 """
 hypo_a_inv(t, x, P) = error("not implemented")
 
-@doc raw"""
+"""
     nonhypo(x, P)
 
 Return the diffusion's coordinates that have direct contribution from some
@@ -52,7 +52,12 @@ zero.
 """
 nonhypo(x, P) = x
 
-#TODO this is needed for the inverse solve!:
+"""
+    nonhypo_σ(t::Float64, x, P)
+
+Return a sub-matrix of the full volatility matrix `σ` that consists of non-zero
+rows of `σ`.
+"""
 nonhypo_σ(t::Float64, x, P) = σ(t, x, P)
 
 """

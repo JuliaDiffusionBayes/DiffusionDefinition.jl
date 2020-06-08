@@ -1,10 +1,10 @@
-# Conjugate updates
+# [Conjugate updates](@id conjugate_updates)
 ****
 In an MCMC setting it is sometimes possible to employ certain types of efficient updates called "conjugate updates". They can be employed if the likelihood and the prior fit together like a glove, allowing to pin down the posterior density by identifying it with one of the standard distributions. For the parameters appearing in the diffusion's drift such prior–posterior pair can **sometimes** be taken to be Gaussian–Gaussian.
 
 This package does not deal with MCMC sampling for diffusions; however, it defines macros that automatically build functions that are required for conjugate updates in [DiffusionMCMC.jl](https://github.com/JuliaDiffusionBayes/DiffusionMCMC.jl). Below, we explain only how the macros introduced in DiffusionDefinition.jl work and give no further details about conjugate updates. To see more details about on this topic see [...].
 
-## Conjugate Gausian updates
+## [Conjugate Gausian updates](@id conjugate_gaussian_updates)
 ------
 To perform conjugate Gaussian updates in [DiffusionMCMC.jl](https://github.com/JuliaDiffusionBayes/DiffusionMCMC.jl) the following functions need to be defines for your diffusion law:
 ```@docs
@@ -14,7 +14,6 @@ DiffusionDefinition.hypo_a_inv
 DiffusionDefinition.nonhypo
 DiffusionDefinition.ignore_for_cu
 ```
-
 
 In this package we implement a macro that makes this definition process more convenient
 ```@docs

@@ -1,4 +1,5 @@
 # [Buffers](@id explain_buffers)
+******
 Buffers are simply structs gathering containers that are used for in-place computations. They inherit from
 ```@docs
 DiffusionDefinition.AbstractBuffer

@@ -128,7 +128,7 @@ end
 Checks if all coordinates adhere to lower and upper bound restrictions
 """
 function _bound_satisfied(::BoundedStateSpace{L,U}, x) where {L,U}
-    _bound_satisfied(L, x) && bound_satisfied(U, x)
+    _bound_satisfied(L, x) && _bound_satisfied(U, x)
 end
 
 function bound_info(::DiffusionProcess{T,DP,DW,SS}) where {T,DP,DW,SS}

@@ -1,8 +1,9 @@
 # Sampling diffusion trajectories
---------------------------------------------------------------------------------
+******
 This package extends functions `Random.rand!` and `Base.rand` to sampling of trajectories of diffusion processes.
 
 ## Trajectories
+-------
 The containers for sampled trajectories are instances of `Trajectory` from the package [Trajectories.jl](https://github.com/mschauer/Trajectories.jl). The functions exported by `Trajectories.jl` are re-exported by this package. The most literal way of defining trajectories is to directly pass already initialized and sized containers (or iterators), for instance
 ```julia
 tt = 0.0:0.01:1.0
@@ -53,6 +54,7 @@ _time, _path = XX.t, XX.x
 See the [README.md of Trajectories](https://github.com/mschauer/Trajectories.jl) for more details regarding other functionality implemented for `Trajectory`'ies.
 
 ## Sampling Wiener process
+-------
 In this package sampling of diffusion paths is always done on the basis of sampling the Wiener process first, treating it as a driving Brownian motion and then `solve!`ing the trajectory of the process based on that. The simplest way of sampling a Wiener process is to call:
 ```julia
 y1 = ... # define a starting point
@@ -84,6 +86,7 @@ rand!(wiener(), W, y1) # The first letter in `Wiener()` may be capital or not
 Note that in this case there is no need to decorate `Wiener` with additional type and dimension information as it is automatically inferred from the `Trajectory` container.
 
 ## Sampling diffusion processes
+------
 The simplest way of sampling a diffusion trajectory is to call:
 ```julia
 P = Lorenz(10.0, 28.0, 8.0/3.0, 1.0)
@@ -116,6 +119,7 @@ Calling `rand!` and `DD.solve!` over and over again is much quicker than calling
     `rand` and `rand!` functions by default use the default pseudo-random number generator from the package [Random.jl](https://docs.julialang.org/en/v1/stdlib/Random/). If you wish to use your own pseudo-random number generator then pass it as an additional first argument, for instance: `rand(RNG, Wiener(), tt)`.
 
 ## Plotting the results
+------
 We provide plotting recipes for the `Trajectory` objects, so the `plot` function can be used to visualize the sampled trajectories very easily. Pass `Val(:vs_time)` to plot multiple (or single) trajectories vs time variable. Pass `Val(:x_vs_y)` to plot two coordinates against each other. Specify coordinates with a named argument `coords`. Otherwise, decorate your plots as you would otherwise by calling a `plot` function. For instance, to plot `X[1]` against `X[3]` call:
 ```julia
 using Plots

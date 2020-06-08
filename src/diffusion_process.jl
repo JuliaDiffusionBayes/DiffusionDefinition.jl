@@ -13,15 +13,13 @@ _CONSTPARAMETERS = [
     :constant_parameters, :constant_param, :constant_params,
     :constantparameters, :constantparam, :constantparams
 ]
-_CONJUGATE = [:conjugate]
+#_CONJUGATE = [:conjugate]
 _ENDPOINTINFO = [:aux_info, :auxiliary_info, :end_points, :end_point_info]
 _ENDPOINTEXTRA = [
     [:t0, :t_0],
     [:T],
-    [:x0, :y0, :state0, :x_0, :y_0, :state_0],
     [:v0, :obs0, :v_0, :obs_0],
     [:vT, :obsT,  :v_T, :obs_T],
-    [:xT, :yT, :stateT, :x_T, :y_T, :state_T],
 ]
 _EXTRA = [:additional, :extra]
 _WIENER = [:wiener, :noise, :gaus, :gaussian]
@@ -70,8 +68,8 @@ _SPARSEBMAT = [
 ]
 _LINEAR = [:linear, :lineardiffusion]
 _ELTYPE = [:eltype]
-_NUMNONHYPO = [:num_non_hypo, :numnonhypo]
-_PHI = [:phi, :ϕ, :φ]
+#_NUMNONHYPO = [:num_non_hypo, :numnonhypo]
+#_PHI = [:phi, :ϕ, :φ]
 
 _TEMP_DIMENSION_PROCESS = -1
 _TEMP_DIMENSION_WIENER = -1
@@ -211,6 +209,7 @@ function parse_process(name , ex::Expr, ::Any)
     )
     #struct_def, struct_body, struct_const = createstruct(abstract_type, p)
     struct_def = createstruct(abstract_type, p)
+    #println(struct_def)
     #struct_def = Expr(
     #    :macrocall,
     #    :(Core.@doc),
@@ -274,7 +273,7 @@ function update_label(line, current_label)
     _symbol_in(line, _PARAMETERS) && return _PARAMETERS[1]
     _symbol_in(line, _CONSTPARAMETERS) && return _CONSTPARAMETERS[1]
     _symbol_in(line, _ENDPOINTINFO) && return _ENDPOINTINFO[1]
-    _symbol_in(line, _CONJUGATE) && return _CONJUGATE[1]
+    #_symbol_in(line, _CONJUGATE) && return _CONJUGATE[1]
     _symbol_in(line, _EXTRA) && return _EXTRA[1]
     current_label
 end
@@ -461,7 +460,7 @@ format:
 """
 function parse_line!(::Val{:aux_info}, line, p)
     name = line.args[1]
-    for i in 1:6
+    for i in eachindex(_ENDPOINTEXTRA)
         _symbol_in(name, _ENDPOINTEXTRA[i]) && (name = _ENDPOINTEXTRA[i][1])
     end
 
@@ -496,6 +495,7 @@ function add_end_point_info_names_function!(fns, p)
     push!(fns, Expr(:(=), fn_def, fn_body))
 end
 
+#=
 #------------------------------------------------------------------------------#
 #
 #                       For parsing: CONJUGATE UPDATES
@@ -603,7 +603,7 @@ function cleanup_param_names!(expr, t::Symbol, x::Symbol, params)
 end
 
 cleanup_param_names!(num::Number, t::Symbol, x::Symbol, params) = num
-
+=#
 #------------------------------------------------------------------------------#
 #
 #                       For parsing: ADDITIONAL INFO
@@ -718,11 +718,11 @@ function fill_unspecified_with_defaults(::Val{:additional}, p)
         (_DIAGONALBMAT[1], false),
         (_LINEAR[1], false),
         (_ELTYPE[1], Float64),
-        (_NUMNONHYPO[1], (
-            haskey(p.extras, _STATESPACE[1]) ?
-            p.extras[_STATESPACE[1]] :
-            1
-        )),
+        #(_NUMNONHYPO[1], (
+        #    haskey(p.extras, _STATESPACE[1]) ?
+        #    p.extras[_STATESPACE[1]] :
+        #    1
+        #)),
     ]
     for (key, default_val) in defaults
         !haskey(p.extras, key) && (p.extras[key] = default_val)
@@ -762,7 +762,7 @@ function createstruct(abstract_type, p)
         :new :
         Expr(:curly, :new, p.template_args...,)
     )
-
+    #=
     xT_default = (
         length(end_point_info_vec)>0 ?
         [
@@ -787,15 +787,14 @@ function createstruct(abstract_type, p)
         ] :
         []
     )
-
+    =#
 
     constructor_def = add_where_decorator(
         Expr(
             :call,
             p.name,
             param_vec...,
-            end_point_info_vec[1:end-1]...,
-            xT_default...
+            end_point_info_vec...,
         ),
         p
     )
@@ -821,8 +820,7 @@ function createstruct(abstract_type, p)
                 :parameters,
                 param_vec...,
             ),
-            end_point_info_vec[1:end-1]...,
-            xT_default...
+            end_point_info_vec...,
         ),
         p
     )
@@ -869,16 +867,17 @@ end
 
 
 function organize_end_point_info(p)
-    end_point_info_names = [:t0, :T, :v0, :x0, :vT, :xT]
+    end_point_info_names = [:t0, :T, :v0, :vT]
     end_point_info_vec = Any[]
     end_point_info_used_names = Symbol[]
-    if any([haskey(p.extras, eio) for eio in end_point_info_names])
-        for name in [:t0, :T, :v0, :x0, :vT]
-            haskey(p.extras, name) && (
-                push!(end_point_info_vec, Expr(:(::), name, p.extras[name]));
-                push!(end_point_info_used_names, name)
-            )
-        end
+    #if any([haskey(p.extras, eio) for eio in end_point_info_names])
+    for name in end_point_info_names
+        haskey(p.extras, name) && (
+            push!(end_point_info_vec, Expr(:(::), name, p.extras[name]));
+            push!(end_point_info_used_names, name)
+        )
+    end
+    #=
         # the space for the exact end-point must always be there due to blocking
         default_datatype = find_state_datatype(
             p.extras[_ELTYPE[1]], # eltype
@@ -889,12 +888,14 @@ function organize_end_point_info(p)
             Expr(:(::), :xT, get(p.extras, :xT, default_datatype))
         )
         push!(end_point_info_used_names, :xT)
-    end
+        =#
+    #end
     end_point_info_vec, end_point_info_used_names
 end
 
-
+#=
 function find_state_datatype(_eltype, dim_process)
     dim_process < 9 && return SVector{dim_process,eval(_eltype)}
     return Vector{eval(_eltype)}
 end
+=#

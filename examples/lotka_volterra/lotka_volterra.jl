@@ -6,6 +6,7 @@
     :parameters
     (α, β, γ, δ, σ1, σ2) --> K
 
+    #=
     :conjugate
     phi(t, x) --> (
         (0.0, 0.0),
@@ -18,6 +19,7 @@
     )
     nonhypo(x) --> x
     num_non_hypo --> 2
+    =#
 
     :additional
     constdiff --> true

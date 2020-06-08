@@ -1,5 +1,5 @@
 # Computing path-functionals when sampling
---------------------------------------------------------------------------------
+******
 `rand`, `rand!` and `solve!` accept an additional, named argument `f`—a functional of a path. By default it is turned off, but we may define some `Julia` function and pass it on to `rand`, `rand!` or `solve!` to be evaluated during the call to `solve!`. For out-of-place computations three versions of function need to be defined:
 ```julia
 # called at the very start of solve!
@@ -36,6 +36,7 @@ foo(f_accum, P::Lorenz, y, ::Val{:final}) = exp(f_accum + y[2]/100.0)
 X, foo_result = rand(P, tt, y1; f=foo)
 ```
 ## Gradients of path-functionals when sampling
+-----
 Why would we care about computing path-functionals at the time of sampling instead of simply doing so after the path has been sampled and stored in a `Trajectory`? The answer is: we can leverage Julia's automatic differentiation implemented in the package [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) to compute gradients (and Hessians) of said functionals with respect to, say, a starting point or diffusion's parameters in a very efficient manner and without having to strain the memory by expanding the DataType used in `Trajectory`'ies.
 
 ### Example

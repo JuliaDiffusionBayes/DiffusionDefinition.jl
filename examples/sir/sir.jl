@@ -21,7 +21,7 @@
     =#
 
     :additional
-    statespace -->BoundedStateSpace(((1,2), (0.0,0.0)), ((1,2), (1.0,1.0)))
+    statespace --> BoundedStateSpace(((1,2), (0.0,0.0)), ((1,2), (1.0,1.0)))
 end
 
 function DiffusionDefinition.b(t, x, P::SIR)
@@ -36,4 +36,8 @@ function DiffusionDefinition.σ(t, x, P::SIR)
         -P.σ1*sqrt((1.0 - x[1] - x[2])*x[1])  -P.σ2*sqrt(x[1]);
         0.0   P.σ2*sqrt(x[1])
     ]
+end
+
+function DiffusionDefinition.bound_satisfied(P::SIR, x)
+    (x[1] + x[2]) < 1.0 && DiffusionDefinition._bound_satisfied(P, x)
 end

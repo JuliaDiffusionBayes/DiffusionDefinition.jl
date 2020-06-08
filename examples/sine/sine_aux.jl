@@ -5,7 +5,7 @@
     :auxiliary_info
     t0 --> Float64
     T --> Float64
-    x0 --> R
+    v0 --> R
     vT --> S
 
     :additional
@@ -14,7 +14,7 @@
 end
 
 DiffusionDefinition.B(t, P::SineAux) = 0.0 + (t/P.T)/5.0
-DiffusionDefinition.β(t, P::SineAux) = (P.vT-P.x0)/P.T
+DiffusionDefinition.β(t, P::SineAux) = (P.vT-P.v0)/P.T
 DiffusionDefinition.σ(t, x, P::SineAux) = P.σ
 
 DiffusionDefinition.default_type(::SineAux) = Float64

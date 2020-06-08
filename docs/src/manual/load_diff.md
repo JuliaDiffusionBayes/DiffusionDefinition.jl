@@ -1,4 +1,5 @@
 # Loading diffusions
+******
 Many standard diffusion processes have already been defined by us in this package via `@diffusion_process` and you may simply load them and start using them immediately without having to define them yourself. To see a list of all available processes call
 ```julia
 @load_diffusion

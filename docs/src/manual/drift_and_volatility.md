@@ -1,5 +1,5 @@
 # Defining the drift and the volatility coefficient
---------------------------------------------------------------------------------
+*****
 To complete the definition of a diffusion process we need to specify its drift, as well as its volatility coefficient. For the `Lorenz` example from the [previous section](@ref Lorenz_example) we can do this by writing:
 ```julia
 const DD = DiffusionDefinition
@@ -34,6 +34,7 @@ In this case case the output is saved to a `buffer`, which must have appropriate
     Always use `StaticArrays` for out-of-place drift and volatility! If functions using `DD.b` and `DD.σ` are faster with regular arrays, then you shouldn't be using out-of-place methods in the first place, but `DD.b!` and `DD.σ!` instead. A general rule of thumb is to use `DD.b` and `DD.σ` for low dimensional diffusions (up to dimension `~10` for elliptic diffusions with dense volatility coefficients or up to dimension `~100` for those with sparse volatility coefficients) and use in-place methods otherwise.
 
 ## [Telling Julia whether to use (`DD.b`, `DD.σ`) or (`DD.b!`, `DD.σ!`)](@id default_types_for_P)
+-----
 Some functions implemented in this package have two versions: one relying on out-of-place methods, another on in-place methods. For instance:
 ```@docs
 DiffusionDefinition.solve!(XX, WW, P, y1)
