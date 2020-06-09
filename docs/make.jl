@@ -43,7 +43,7 @@ makedocs(;
         ],
         "Tutorials" => Any[
             "Defining a diffusion process for a swinging pendulum" => joinpath("tutorials", "swinging_pendulum.md"),
-            "(TODO) In-place vs out-of-place methods" => joinpath("tutorials", "in_place_vs_out_of_place.md"),
+            "In-place vs out-of-place methods" => joinpath("tutorials", "in_place_vs_out_of_place.md"),
             "Sampling of diffusion bridges" => joinpath("tutorials", "diffusion_bridges.md"),
         ],
         "Predefined Diffusions" => Any[

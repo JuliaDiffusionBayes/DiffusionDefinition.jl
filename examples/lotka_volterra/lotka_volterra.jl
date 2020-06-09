@@ -1,3 +1,27 @@
+function DiffusionDefinition.diffusion_message(::Val{:LotkaVolterra})
+    println("* * * * * * * * * * *")
+    println("Lotka–Volterra system")
+    println("* * * * * * * * * * *")
+    println("Description")
+    println("------------")
+    println("A simple, scalar-valued predator-prey model.")
+    println("It is represented by a two-dimensional process (Xₜ, Yₜ).")
+    println("dXₜ = (αXₜ - βXₜYₜ)dt + σ₁dW¹ₜ,")
+    println("dYₜ = (δXₜYₜ - γYₜ)dt + σ₂dW²ₜ.")
+    println("The model has six parameters:")
+    println("\tα, β, γ, δ, σ1, σ2")
+    println("\nConstructors")
+    println("------------")
+    println("You may initialize the process either by passing the parameters")
+    println("in the order above, as in:")
+    println("α, β, γ, δ, σ1, σ2 = ...")
+    println("P = LotkaVolterra(α, β, γ, δ, σ1, σ2)")
+    println("or by keyword arguments")
+    println("p = (α=..., β=..., γ=..., δ=..., σ1=..., σ2=...)")
+    println("P = LotkaVolterra(;p...)")
+    println()
+end
+
 @diffusion_process LotkaVolterra{K} begin
     :dimensions
     process --> 2

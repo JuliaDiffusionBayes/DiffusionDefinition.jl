@@ -1,3 +1,44 @@
+function DiffusionDefinition.diffusion_message(::Val{:Prokaryote})
+    println("* * * * * * * * * * ")
+    println("Prokaryote diffusion")
+    println("* * * * * * * * * * ")
+    println("Description")
+    println("------------")
+    println("Chemical Langevin equation for a simple system describing ")
+    println("production of a protein that is repressing its own production.")
+    println("It is represented by a 4-dimensional diffusion driven by an ")
+    println("8-dimensional Wiener process:")
+    println("\ndXₜ=S[θ .× h(Xₜ)]dt + S ⊙ √. ( θ .× h(X_t) ) dWₜ,\n")
+    println("where the custom operation ⊙:ℝᵈˣᵏ→ℝᵈˣᵏ is defined via:")
+    println("\n(M ⊙ μ)ᵢⱼ = Mᵢⱼμⱼ, i=1,…,d; j=1,…,k,\n")
+    println("S is the stoichiometry matrix:")
+    println("""S=[
+    0   0   1   0   0   0  -1   0
+    0   0   0   1  -2   2   0  -1
+   -1   1   0   0   1  -1   0   0
+   -1   1   0   0   0   0   0   0
+]"""
+)
+    println("and the function h is given by:")
+    println("\nh(x) = (x₃x₄, K-x₄, x₄, x₁, x₂(x₂-1)/2, x₃, x₁, x₂)ᵀ.\n")
+    println("The underlying process X represents:")
+    println("X = (RNA, P, P₂, DNA)")
+    println("The model has eight parameters:")
+    println("\tc1 c2 c3 c4 c5 c6 c7 c8 K")
+    println("The first eight parameters represent the rate of chemical reactions")
+    println("The last represent the total number of the DNA strands")
+    println("\nConstructors")
+    println("------------")
+    println("You may initialize the process either by passing the parameters")
+    println("in the order above, as in:")
+    println("c₁, c₂, c₃, c₄, c₅, c₆, c₇, c₈, K = ...")
+    println("P = Prokaryote(c₁, c₂, c₃, c₄, c₅, c₆, c₇, c₈, K)")
+    println("or by keyword arguments")
+    println("p = (c1=..., c2=..., c3=..., c4=..., c5=..., c6=..., c7=..., c8=..., K=...)")
+    println("P = Prokaryote(;p...)")
+    println()
+end
+
 @diffusion_process Prokaryote{T} begin
     :dimensions
     process --> 4

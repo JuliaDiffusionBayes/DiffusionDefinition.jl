@@ -4,7 +4,7 @@ by a two-dimension diffusion process solving the following SDE
 ```math
 \begin{align*}
 \dd I_t &= (\alpha (1-I_t-R_t)I_t - \beta I_t)\dd t -\sigma_1\sqrt{(1-I_t-R_t)I_t} \dd W^{(1)}_t - \sigma_2\sqrt{I_t}\dd W^{(2)}_t,\\
-\dd R_t &= \beta I_t + \sigma_2\sqrt{I_t} \dd W^{(2)}_t,
+\dd R_t &= \beta I_t \dd t + \sigma_2\sqrt{I_t} \dd W^{(2)}_t,
 \end{align*}
 ```
 with $I_t\in[0,1]$ and $R_t\in[0,1]$ for all $t\in[0,T]$. It can be called with:

@@ -229,10 +229,13 @@ function parse_process(name , ex::Expr, ::Any)
         eval(fn)
     end
     println("A new struct `$curly_name` has been defined.")
-    println("To learn more about how to define an instance of this struct")
-    println("please type in `?$name` and hit `ENTER`.")
-
+    diffusion_message(Val(name))
     Meta.parse("import DiffusionDefinition.$name")
+end
+
+function diffusion_message(::Val{T}) where T
+    #println("To learn more about how to define an instance of this struct")
+    #println("please type in `?$T` and hit `ENTER`.")
 end
 
 """
