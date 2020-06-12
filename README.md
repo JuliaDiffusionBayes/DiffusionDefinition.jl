@@ -47,9 +47,6 @@ The package is not yet registered. To install it, type in:
 
 See [the documentation](https://juliadiffusionbayes.github.io/DiffusionDefinition.jl/dev/).
 
-
-The package is designed as an integral part of a suite of packages [DiffusionBayes.jl](https://github.com/JuliaDiffusionBayes/DiffusionBayes.jl) used for Bayesian inference for diffusion processes, but it can also be used on its own to define and sample from diffusion processes.
-
 ## Related
 
 DiffusionDefinition.jl belongs to a larger suite of packages in [JuliaDiffusionBayes](https://github.com/JuliaDiffusionBayes) designed to facilitate Bayesian inference for diffusion processes. Other packages in this suite consist of:
