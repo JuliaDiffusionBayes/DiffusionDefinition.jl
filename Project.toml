@@ -17,6 +17,13 @@ Trajectories = "2c80a279-213e-54d7-a557-e9a14725db56"
 
 [compat]
 julia = "1.4"
+ForwardDiff = "~0.10.10"
+MacroTools = "~0.5.5"
+RecipesBase = "~1.0.1"
+RecursiveArrayTools = "~2.3.3"
+Reexport = "~0.2.0"
+StaticArrays = "~0.12.3"
+Trajectories = "~0.2.2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
