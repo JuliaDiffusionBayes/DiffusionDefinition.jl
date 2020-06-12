@@ -35,11 +35,12 @@ makedocs(;
             "Conjugate updates" =>joinpath("manual", "conjugate_updates.md"),
         ],
         "How to..." => Any[
-            "How to sample Brownian bridges?" => joinpath("how_to_guides", "sample_brownian_bridges.md"),
-            "How to sample Diffusion bridges?" => joinpath("how_to_guides", "sample_diffusion_bridges.md"),
-            "How to sample complex-valued diffusions?" => joinpath("how_to_guides", "sample_complex_valued.md"),
-            "How to customize plots of diffusion trajectories?" => joinpath("how_to_guides", "customize_my_diffusion_plots.md"),
-            "How to compute expectation of gradients of functionals?" => joinpath("how_to_guides", "expect_of_gradient.md"),
+            "... sample Brownian bridges?" => joinpath("how_to_guides", "sample_brownian_bridges.md"),
+            "... sample Diffusion bridges?" => joinpath("how_to_guides", "sample_diffusion_bridges.md"),
+            "... sample complex-valued diffusions?" => joinpath("how_to_guides", "sample_complex_valued.md"),
+            "... customize plots of diffusion trajectories?" => joinpath("how_to_guides", "customize_my_diffusion_plots.md"),
+            "... compute expectation of gradients of functionals?" => joinpath("how_to_guides", "expect_of_gradient.md"),
+            "... use higher order SDE solvers for simulating trajectories?" => joinpath("how_to_guides", "use_higher_order_solvers.md"),
         ],
         "Tutorials" => Any[
             "Defining a diffusion process for a swinging pendulum" => joinpath("tutorials", "swinging_pendulum.md"),
