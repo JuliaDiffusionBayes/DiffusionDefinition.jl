@@ -38,9 +38,8 @@
 
 ## Installation
 
-The package is not yet registered. To install it, type in:
 ```julia
-] add https://github.com/JuliaDiffusionBayes/DiffusionDefinition.jl
+] add DiffusionDefinition
 ```
 
 ## How To Use

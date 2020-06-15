@@ -1,7 +1,7 @@
 # [Installation](@id get_started)
-The package is not registered yet. To install it write:
+
 ```julia
-] add https://github.com/JuliaDiffusionBayes/DiffusionDefinition.jl
+] add DiffusionDefinition
 ```
 
 ## Defining the process
