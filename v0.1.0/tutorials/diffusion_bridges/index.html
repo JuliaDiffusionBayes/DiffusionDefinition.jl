@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Sampling of diffusion bridges · DiffusionDefinition.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="DiffusionDefinition.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit">DiffusionDefinition.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../get_started/package_overview/">Get started</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">User manual</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../manual/defining_diffusions/">Defining diffusions</a></li><li><a class="tocitem" href="../../manual/drift_and_volatility/">Drift and volatility</a></li><li><a class="tocitem" href="../../manual/sampling/">Sampling trajectories</a></li><li><a class="tocitem" href="../../manual/functionals_of_paths/">Computing path-functionals</a></li><li><a class="tocitem" href="../../manual/load_diff/">Loading diffusions</a></li><li><a class="tocitem" href="../../manual/convenience_functions/">Utility functions</a></li><li><a class="tocitem" href="../../manual/buffers/">Buffers</a></li><li><a class="tocitem" href="../../manual/state_space/">State space restrictions</a></li><li><a class="tocitem" href="../../manual/reparameterization/">Reparameterizations</a></li><li><a class="tocitem" href="../../manual/conjugate_updates/">Conjugate updates</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">How to...</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../how_to_guides/sample_brownian_bridges/">... sample Brownian bridges?</a></li><li><a class="tocitem" href="../../how_to_guides/sample_diffusion_bridges/">... sample Diffusion bridges?</a></li><li><a class="tocitem" href="../../how_to_guides/sample_complex_valued/">... sample complex-valued diffusions?</a></li><li><a class="tocitem" href="../../how_to_guides/customize_my_diffusion_plots/">... customize plots of diffusion trajectories?</a></li><li><a class="tocitem" href="../../how_to_guides/expect_of_gradient/">... compute expectation of gradients of functionals?</a></li><li><a class="tocitem" href="../../how_to_guides/use_higher_order_solvers/">... use higher order SDE solvers for simulating trajectories?</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox" checked/><label class="tocitem" for="menuitem-5"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../swinging_pendulum/">Defining a diffusion process for a swinging pendulum</a></li><li><a class="tocitem" href="../in_place_vs_out_of_place/">In-place vs out-of-place methods</a></li><li class="is-active"><a class="tocitem" href>Sampling of diffusion bridges</a><ul class="internal"><li><a class="tocitem" href="#Why-is-there-so-much-text-in-this-tutorial?-1"><span>Why is there so much text in this tutorial?</span></a></li><li><a class="tocitem" href="#Rejection-sampling-1"><span>Rejection sampling</span></a></li><li><a class="tocitem" href="#Rejection-sampling-on-a-path-space-1"><span>Rejection sampling on a path space</span></a></li><li><a class="tocitem" href="#Importance-Sampling-on-a-path-space-1"><span>Importance Sampling on a path space</span></a></li><li><a class="tocitem" href="#Independence-sampler-on-a-path-space-1"><span>Independence sampler on a path space</span></a></li><li><a class="tocitem" href="#Metropolis–Hastings-algorithm-with-local-updates-1"><span>Metropolis–Hastings algorithm with local updates</span></a></li><li><a class="tocitem" href="#Concluding-remarks-1"><span>Concluding remarks</span></a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Predefined Diffusions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../predefined_processes/lotka_volterra/">Lotka-Volterra system</a></li><li><a class="tocitem" href="../../predefined_processes/sine/">Sine diffusion</a></li><li><a class="tocitem" href="../../predefined_processes/sir/">SIR model</a></li><li><a class="tocitem" href="../../predefined_processes/lorenz63/">Lorenz63 system</a></li><li><a class="tocitem" href="../../predefined_processes/lorenz96/">Lorenz96 system</a></li><li><a class="tocitem" href="../../predefined_processes/favetto_samson/">Favetto-Samson model</a></li><li><a class="tocitem" href="../../predefined_processes/prokaryote/">Prokaryotic autoregulatory gene network</a></li><li><a class="tocitem" href="../../predefined_processes/fitzhugh_nagumo/">FitzHugh-Nagumo model</a></li><li><a class="tocitem" href="../../predefined_processes/jansen_rit/">Jansen-Rit model</a></li></ul></li><li><a class="tocitem" href="../../post_index/">Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Sampling of diffusion bridges</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Sampling of diffusion bridges</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaDiffusionBayes/DiffusionDefinition.jl/blob/master/docs/src/tutorials/diffusion_bridges.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="tutorial_sampling_diff_bridges-1"><a class="docs-heading-anchor" href="#tutorial_sampling_diff_bridges-1">Sampling of diffusion bridges</a><a class="docs-heading-anchor-permalink" href="#tutorial_sampling_diff_bridges-1" title="Permalink"></a></h1><hr/><blockquote><p>In this tutorial we will illustrate how to sample diffusion bridges using rejection sampling and importance sampling with Brownian bridge proposals. We will also embed the latter routine in a Metropolis–Hastings algorithm. We will illustrate the techniques on the example of a bivariate double-well potential.</p></blockquote><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Sampling of diffusion bridges using rejection sampling or importance sampling with Brownian bridge proposals <strong>is—in general—not an efficient method and for plenitude of problems it is not even applicable</strong>. It is, however, an excellent starting point for learning about simulation of conditioned diffusions. The tutorial is meant as a didactic explanation of the common mechanisms behind most samplers of conditioned diffusions. Nevertheless, it is NOT meant to be used for production purposes. For that we refer the user to <a href="https://juliadiffusionbayes.github.io/GuidedProposals.jl/dev/">GuidedProposals.jl</a>, which has been designed to specifically address the problem of sampling conditioned diffusions.</p></div></div><h2 id="Why-is-there-so-much-text-in-this-tutorial?-1"><a class="docs-heading-anchor" href="#Why-is-there-so-much-text-in-this-tutorial?-1">Why is there so much text in this tutorial?</a><a class="docs-heading-anchor-permalink" href="#Why-is-there-so-much-text-in-this-tutorial?-1" title="Permalink"></a></h2><hr/><p>Sampling of diffusion bridges might seem like an innocent problem if you haven&#39;t seen it before. It is however a considerable obstacle that many mathematicians, statisticians and physicists have been attacking for tens of years. And for good reasons—efficient methods that solve this problem are considered to be extremely valuable tools for a variety of real-world applications. No universal solution has been found, however, there are a few contending methodologies that perform particularly well across a variety of problems of this kind. Many of those techniques are far too complicated to be explained in a single tutorial. Fortunately, simple versions of rejection and importance sampling fit the bill just right. Even these however require from us to cover some additional details. Hence the length of the tutorial.</p><h2 id="Rejection-sampling-1"><a class="docs-heading-anchor" href="#Rejection-sampling-1">Rejection sampling</a><a class="docs-heading-anchor-permalink" href="#Rejection-sampling-1" title="Permalink"></a></h2><hr/><p>Rejection sampling is a simple, but extremely powerful technique for obtaining independent samples from some probability law <span>$\mathbb{P}$</span> (with density <span>$\dd \mathbb{P}$</span>) using independent samples from another probability law <span>$\mathbb{Q}$</span> (with density <span>$\dd \mathbb{Q}$</span>). You may, for instance, check out the <a href="https://en.wikipedia.org/wiki/Rejection_sampling">wikipedia article</a> to learn more.</p><p>The basic algorithm is as follows:</p><pre><code class="language-julia">struct RejectionSampling end
+# these need to be appropriately defined
+function density(P, at=x) ... end
+function some_max_bound_on_dP_over_dQ(P, Q) ... end
+P, Q = ...
+
+function Base.rand(P, Q, ::RejectionSampling)
+    M = some_max_bound_on_dP_over_dQ(P, Q)
+    while true
+        X° = rand(Q) # proposal
+        acceptance_prob = density(P, at=X) / (density(Q, at=X) * M)
+        # accept/reject; if reject then re-sample and retry; if accept then return X°
+        if rand() &lt;= acceptance_prob
+            return X°
+        end
+    end
+end</code></pre><p>A sample returned by the algorithm above:</p><pre><code class="language-julia">X = rand(P, Q, RejectionSampling())</code></pre><p>is distributed exactly according to <span>$\mathbb{P}$</span> even though all sampling was done exclusively through the law <span>$\mathbb{Q}$</span>.</p><div class="admonition is-success"><header class="admonition-header">Definition</header><div class="admonition-body"><p>The law <span>$\mathbb{P}$</span> is called the <strong>target</strong> law, whereas <span>$\mathbb{Q}$</span> is called the <strong>proposal</strong> law.</p></div></div><h2 id="Rejection-sampling-on-a-path-space-1"><a class="docs-heading-anchor" href="#Rejection-sampling-on-a-path-space-1">Rejection sampling on a path space</a><a class="docs-heading-anchor-permalink" href="#Rejection-sampling-on-a-path-space-1" title="Permalink"></a></h2><hr/><p>Rejection sampling on a path space is a fancy name for the algorithm above as applied to diffusion processes, i.e. when the laws <span>$\mathbb{P}$</span> and <span>$\mathbb{Q}$</span> are some diffusion laws.</p><p>Computation of each individual term in the <strong>acceptance probability</strong></p><pre><code class="language-julia">acceptance_prob = density(P, at=X) / (density(Q, at=X) * M)</code></pre><p>which in a mathematical notation becomes:</p><div>\[\begin{equation}\label{eq:accpprobrs}
+\frac{1}{M}\frac{\dd \mathbb{P}}{\dd \mathbb{Q}}(X)
+\end{equation}\]</div><p>is not possible when working with diffusion processes. Nevertheless, the overall term can sometimes be found.</p><div class="admonition is-info"><header class="admonition-header">Some mathematical details</header><div class="admonition-body"><p>In particular, let&#39;s assume that the target diffusion law is of the following form:</p><div>\[\begin{equation}\label{eq:target_rejection}
+\dd X_t = α(X_t)\dd t + \dd W_t,\quad X_0=x_0, \quad t\in[0,T],
+\end{equation}\]</div><p>with <span>$α:\RR^d→\RR^d$</span> (at least once continuously differentiable), a volatility coefficient given by the identity matrix and <span>$W$</span> denoting a <span>$d$</span>-dimensional Brownian motion. Additionally, let&#39;s assume that there exists a function <span>$A:\RR^d→\RR$</span> such that:</p><div>\[∇A(x) = α(x).\]</div><p>(We refer to <span>$A$</span> as a <strong>potential</strong> function). Then, if we let <span>$\mathbb{P}$</span> denote the law of \eqref{eq:target_rejection} conditioned on an end-point, i.e. of:</p><div>\[\dd X_t = α(X_t)\dd t + \dd W_t,\quad X_0=x_0,\quad X_T=x_T, \quad t\in[0,T],\]</div><p>and we let <span>$\mathbb{Q}$</span> denote the law of a <span>$d$</span>–dimensional Brownian bridge joining <span>$x_0$</span> and <span>$x_T$</span> on <span>$[0,T]$</span>, then the <strong>Radon–Nikodym derivative</strong> between the two is proportional to:</p><div>\[\begin{equation}\label{eq:rnd}
+\frac{\dd \mathbb{P}}{\dd \mathbb{Q}}(X)\propto \exp\left\{- \int_0^Tϕ(X_t)\dd t \right\}\leq 1,
+\end{equation}\]</div><p>where</p><div>\[\begin{equation}\label{eq:phi_function}
+\phi(x):=\frac{1}{2}\left[ \alpha&#39;\alpha + Δ A \right](x) - l.
+\end{equation}\]</div><p>and <span>$l$</span> is any constant, which we may take in particular to be</p><div>\[l\leq \inf_{x\in\RR^d}\left\{ \frac{1}{2}\left[ \alpha&#39;\alpha + Δ A \right](x) \right\},\]</div><p>that guarantee the inequality <span>$\leq 1$</span> in \eqref{eq:rnd} and where the infimum on the right is <strong>assumed to exist</strong> (if it does not, then rejection sampling with Brownian bridge proposals cannot be applied).</p></div></div><p>The main take-away message from the box above is that if the stochastic differential equation admits a nice enough expression \eqref{eq:target_rejection}, then it is possible to find a closed form formula for the computation of the acceptance probability</p><div>\[\frac{1}{M}\frac{\dd \mathbb{P}}{\dd \mathbb{Q}}(X),\]</div><p>and rejection sampling on a path space can be performed by simply repeatedly drawing from <span>$\mathbb{Q}$</span>–the law of Brownian bridges (<a href="../../how_to_guides/sample_brownian_bridges/#how_to_guides-1">see this how-to-guide</a> for more info)—and accepting the samples with probability given in \eqref{eq:rnd}.</p><div class="admonition is-info"><header class="admonition-header">Lamperti transformation</header><div class="admonition-body"><p>The restriction to identity matrix volatility coefficient may be slightly relaxed thanks to existence of Lamperti transformation, which allows one to transform a diffusion with a non-identity volatility coefficient to the one with identity volatility. This transform is applicable to all scalar diffusions, however, in multiple dimensions it is more restrictive. See [Ait Sahalia 2008] for more details.</p></div></div><h3 id="Example-1"><a class="docs-heading-anchor" href="#Example-1">Example</a><a class="docs-heading-anchor-permalink" href="#Example-1" title="Permalink"></a></h3><p>Let&#39;s look at a simple example of a bivariate double-well potential model solving the following SDE</p><div>\[\dd X_t = -\frac{1}{2}∇A(X_t)\dd t + \dd W_t,\quad X_0 = x_0,\quad t\in[0,T],\]</div><p>where</p><div>\[A(x) := ρ_1\left[ (x_2)^2 - μ_1 \right]^2 + ρ_2\left[ x_2 - μ_2 x_1 \right]^2,\]</div><p>and <span>$ρ_1,ρ_2,μ_1,μ_2&gt;0$</span> are parameters. We can define it very simply</p><pre><code class="language-julia">using DiffusionDefinition
+const DD = DiffusionDefinition
+
+using StaticArrays, LinearAlgebra
+
+@diffusion_process BivariateDoubleWell{T} begin
+    :dimensions
+    process --&gt; 2
+    wiener --&gt; 2
+
+    :parameters
+    (ρ1, ρ2, μ1, μ2) --&gt; T
+
+    :additional
+    constdiff --&gt; true
+end
+
+DD.b(t, x, P::BivariateDoubleWell) = @SVector [
+    P.μ2*P.ρ2*(x[2]-P.μ2*x[1]),
+    2.0*P.ρ1*P.μ1*x[2] - 2.0*P.ρ1*x[2]^3 - P.ρ2*(x[2]-P.μ2*x[1]),
+]
+
+@inline DD.σ(t, x, P::BivariateDoubleWell) = SDiagonal{2,Float64}(I)</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>In fact, below, we will never use the volatility coefficient. We defined it simply for completeness.</p></div></div><p>Tedious calculations reveal that function <span>$ϕ$</span> achieves a global minimum:</p><div>\[\inf_xϕ(x)= -\frac{p_1+p_2}{54μ_2^2(1+μ_2^2)},\]</div><p>where</p><div>\[\begin{align*}
+p_1&amp;:=2μ_2\sqrt{2ρ_1}\left[ 9 + μ_2^2\left(9+2ρ_1μ_1^2\right) \right]^{3/2}\\
+p_2&amp;:=μ_2^2\left[ 54ρ_1μ_1(1+μ_2^2) - 8ρ_1^2μ_1^3μ_2^2 + 27ρ_2(1+μ_2^2)^2 \right].
+\end{align*}\]</div><p>In Julia this becomes</p><pre><code class="language-julia">function inf_ϕ(P::BivariateDoubleWell)
+    -( compute_p1(P) + compute_p2(P) )/( 54.0*P.μ2^2*(1.0 + P.μ2^2) )
+end
+
+function compute_p1(P::BivariateDoubleWell)
+    2.0*P.μ2*sqrt(2.0*P.ρ1)*(
+        9.0 + P.μ2^2*(9.0 + 2.0*P.ρ1*P.μ1^2)
+    )^(3/2)
+end
+
+function compute_p2(P::BivariateDoubleWell)
+    P.μ2^2*(
+        54.0*P.ρ1*P.μ1*(1.0+P.μ2^2)
+        - 8.0*P.ρ1^2*P.μ1^3*P.μ2^2
+        + 27*P.ρ2*(1.0+P.μ2^2)^2
+    )
+end</code></pre><p>We should also have a routine for evaluating the <span>$ϕ$</span> function:</p><pre><code class="language-julia">function ϕ(x, P::DD.DiffusionProcess)
+    b = DD.b(nothing, x, P)
+    0.5*(dot(b,b) + sum(b_prime(x, P)))
+end
+
+b_prime(x, P::BivariateDoubleWell) = @SVector [
+    -P.μ2^2*P.ρ2,
+    2.0*P.ρ1*P.μ1 - 6.0*P.ρ1*x[2]^2 - P.ρ2,
+]</code></pre><p>As well as for computing the acceptance probability for the simulated proposal path:</p><pre><code class="language-julia">function acc_prob(X, P::DD.DiffusionProcess, l=inf_ϕ(P))
+    logprob = 0.0
+    for i in 1:length(X)-1
+        dt = X.t[i+1]-X.t[i]
+        logprob -= (ϕ(X.x[i], P) - l)*dt
+    end
+    exp(logprob)
+end</code></pre><p>Finally, we want to have a routine for sampling from the proposal law, which in our case is the law of Brownian bridges (see <a href="../../how_to_guides/sample_brownian_bridges/#how_to_guides-1">the relevant how-to-guide</a> for more details).</p><pre><code class="language-julia">using Random
+struct BrownianBridge end
+
+function Random.rand!(::BrownianBridge, X, x0=zero(X.x[1]), xT=zero(X.x[1]))
+    rand!(Wiener(), X)
+    T, B_T = X.t[end], X.x[end]
+    λ(t, x) = ( x0 + x + (xT - x0 - B_T) * t/T )
+    X.x .= λ.(X.t, X.x)
+end</code></pre><p>We are now ready to implement rejection sampling on a path space.</p><pre><code class="language-julia">function Base.rand(P::DD.DiffusionProcess, tt, x0, xT, ::RejectionSampling)
+    X° = trajectory(tt, P).process
+    # compute constant l only once, it won&#39;t change anyway
+    l = inf_ϕ(P)
+    while true
+        # proposal draw
+        rand!(BrownianBridge(), X°, x0, xT)
+
+        # accept/reject; if reject then re-sample and retry; if accept then return X°
+        (rand() &lt;= acc_prob(X°, P, l)) &amp;&amp; return X°
+    end
+end</code></pre><p>That&#39;s it! As you can see for yourself: a beautifully simple algorithm. Let&#39;s test it. We will be using the following parameterization</p><pre><code class="language-julia">θ = (
+    ρ1 = 0.5,
+    ρ2 = 0.5,
+    μ1 = 2.0,
+    μ2 = 1.0
+)</code></pre><p>The bivariate double-well potential is—as the name suggests it–a diffusion with a stationary distribution that has two modes. These modes are at:</p><pre><code class="language-julia">mode1 = @SVector [sqrt(θ.μ1)/θ.μ2, sqrt(θ.μ1)]
+mode2 = @SVector [-sqrt(θ.μ1)/θ.μ2,-sqrt(θ.μ1)]</code></pre><p>Consequently, when we simulate the trajectory over long intervals we should observe the trajectories being attracted to these two poles.</p><p>Let&#39;s start modestly and try to simulate <span>$30$</span> bridge trajectories over the interval <span>$[0,3]$</span> that join the two diffusion modes</p><pre><code class="language-julia">P = BivariateDoubleWell(θ...)
+tt = 0.0:0.01:3.0
+
+N = 30
+paths = [rand(P, tt, mode1, mode2, RejectionSampling()) for i in 1:N]
+
+using Plots
+p = plot(size=(800, 500), layout=(2,1))
+for i in 1:N
+    plot!(p, paths[i], Val(:vs_time), alpha=[0.2 0.2], color=[&quot;steelblue&quot; &quot;steelblue&quot;], label=[&quot;X₁&quot; &quot;X₂&quot;])
+end
+display(p)</code></pre><p><img src="../../assets/tutorials/cond_diff/rej_sampling_simple.png" alt="rej_sampling_simple"/></p><p>When you run the code above you might be slightly surprised because of two reasons.</p><ol><li>First, where is the bimodality behavior we talked about?</li><li>Second, why did the code not execute immediately? Seemingly there aren&#39;t that many computations to be performed! On my computer it takes around 1.5second to simulate the trajectories. Why so long?</li></ol><p>To answer the first concern, the bimodal behavior becomes pronounced only over long enough time-spans. The time span we used was simply too short and the trajectories ended-up being stretched around a straight line that connects the end-points. Had we taken longer time-spans the behavior would have been more pronounced. But let&#39;s not jump ahead of ourselves by trying to run the algorithm above with larger <span>$T$</span>. Indeed, the reason for the slow performance of the code above is that an already seemingly short time-span of <span>$[0,3]$</span> is troublesome for the sampler and <strong>most proposals end up being rejected</strong>. We can modify the routine a little to examine the magnitude of the problem</p><pre><code class="language-julia">function Base.rand(P::DD.DiffusionProcess, tt, x0, xT, ::RejectionSampling)
+    X° = trajectory(tt, P).process
+    # compute constant l only once, it won&#39;t change anyway
+    l = inf_ϕ(P)
+    num_prop = 0
+    while true
+        # proposal draw
+        rand!(BrownianBridge(), X°, x0, xT)
+        num_prop += 1
+
+        # accept/reject; if reject then re-sample and retry; if accept then return X°
+        (rand() &lt;= acc_prob(X°, P, l)) &amp;&amp; (
+            println(&quot;Proposed $num_prop trajectories until acceptance&quot;);
+            return X°;
+        )
+    end
+end</code></pre><p>And let&#39;s see what is the ballpark figure for the number of proposals until acceptance:</p><pre><code class="language-julia">[rand(P, tt, mode1, mode2, RejectionSampling()) for i in 1:5]
+Proposed 4168 trajectories until acceptance
+Proposed 762 trajectories until acceptance
+Proposed 1939 trajectories until acceptance
+Proposed 4816 trajectories until acceptance
+Proposed 14576 trajectories until acceptance</code></pre><p>Thousands of proposals for a single accepted path! That&#39;s not very efficient...</p><p>You might be thinking to yourself <em>how bad could it get if we try to increase <span>$T$</span> nevertheless</em>? It turns out <strong>exponentially</strong> bad. For instance:</p><pre><code class="language-julia">julia&gt; tt = 0.0:0.01:4.0
+0.0:0.01:4.0
+
+julia&gt; paths = [rand(P, tt, mode1, mode2, RejectionSampling()) for i in 1:5]
+Proposed 274113 trajectories until acceptance
+Proposed 22926 trajectories until acceptance
+Proposed 8498 trajectories until acceptance
+Proposed 258171 trajectories until acceptance
+Proposed 216711 trajectories until acceptance</code></pre><p>Hundreds of thousands of proposals for a single acceptance... If you are about to grab a cup of coffee you can also run the following:</p><pre><code class="language-julia">julia&gt; tt = 0.0:0.01:5.0
+0.0:0.01:5.0
+
+julia&gt; paths = [rand(P, tt, mode1, mode2, RejectionSampling()) for i in 1:5]
+Proposed 82423 trajectories until acceptance
+Proposed 4279263 trajectories until acceptance
+Proposed 1524125 trajectories until acceptance
+Proposed 5512559 trajectories until acceptance
+Proposed 3745595 trajectories until acceptance</code></pre><p>Millions of proposals until acceptance... Trying larger <span>$T$</span>s is probably not advisable here unless you are going away for a holiday.</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>On the plus side, the bimodality is slowly revealing itself:</p><pre><code class="language-julia">using Plots
+N = 5
+p = plot(size=(800, 500), layout=(2,1), title=[&quot;X₁&quot; &quot;X₂&quot;])
+for i in 1:N
+    plot!(p, paths[i], Val(:vs_time), alpha=[0.5+0.8*(i==N) 0.5+0.5*(i==N)], color=[&quot;steelblue&quot; &quot;steelblue&quot;], label=&quot;&quot;)
+end
+display(p)</code></pre><p><img src="../../assets/tutorials/cond_diff/rej_sampling_simple_on5.png" alt="rej_sampling_simple_on5"/></p></div></div><p>This is all to say that rejection sampling is not suitable for sampling <strong>long diffusion bridges</strong>. On the other hand, we should appreciate what we have achieved. We have sampled <strong>independent</strong> and identically distributed trajectories from the law of a bivariate double-well potential diffusion bridge! And we did it by sampling <strong>exclusively from the law of Brownian bridges</strong>. This is nothing to be taken for granted and it is an impressive result in itself. Nevertheless, we can still do better, even within the scope of this tutorial.</p><h2 id="Importance-Sampling-on-a-path-space-1"><a class="docs-heading-anchor" href="#Importance-Sampling-on-a-path-space-1">Importance Sampling on a path space</a><a class="docs-heading-anchor-permalink" href="#Importance-Sampling-on-a-path-space-1" title="Permalink"></a></h2><hr/><p>Importance sampling can be thought of as a modification to rejection sampling, where the accept/reject step is substituted with decorating each sample with a weight. To be more precise, the term that was used as an acceptance probability is now used as a weight and is returned together with a sample. The algorithm becomes:</p><pre><code class="language-julia">struct ImportanceSampling end
+
+function Base.rand(P::DD.DiffusionProcess, tt, x0, xT, ::ImportanceSampling)
+    X° = trajectory(tt, P).process
+    # constant l no longer needs to be computed as all weights contain it
+    l = 0.0 # was `inf_ϕ(P)`
+
+    rand!(BrownianBridge(), X°, x0, xT)
+
+    return X°, acc_prob(X°, P, l)
+end</code></pre><p>The first advantage of importance sampling is that we only need to know weights up to a constant of proportionality (in particular, we don&#39;t need to know <span>$M$</span> from \eqref{eq:accpprobrs}, or <span>$l$</span> from \eqref{eq:phi_function}). In particular for diffusions, we don&#39;t even need to know the potential function <span>$A$</span>. This relaxation of technical conditions makes it possible to apply importance sampling to diffusion laws that couldn&#39;t have been sampled with rejection sampling. It doesn&#39;t however help with the computational cost. True, the accept/reject step is no longer there, so it only takes one execution of the routine to yield an output, however, most of these samples are going to have very low weights attached to them, meaning that they won&#39;t be of much use (though they will still have some use, as opposed to the samples rejected by the rejection sampler). For instance:</p><pre><code class="language-julia">tt = 0.0:0.01:3.0
+weights = [rand(P, tt, mode1, mode2, ImportanceSampling())[2] for i in 1:Int(1e4)]
+histogram(weights./sum(weights), norm=true, label=&quot;distribution of normalized weights&quot;)</code></pre><p><img src="../../assets/tutorials/cond_diff/weight_distr.png" alt="weight_distr"/> while</p><pre><code class="language-julia">julia&gt; round.(sort(weights)[end-9:end]./sum(weights), sigdigits=3)
+10-element Array{Float64,1}:
+ 0.0021
+ 0.00213
+ 0.00214
+ 0.00223
+ 0.00224
+ 0.00232
+ 0.00236
+ 0.00323
+ 0.00372
+ 0.00382</code></pre><p>Computation of expectations of path functionals might however be better behaved.</p><h2 id="Independence-sampler-on-a-path-space-1"><a class="docs-heading-anchor" href="#Independence-sampler-on-a-path-space-1">Independence sampler on a path space</a><a class="docs-heading-anchor-permalink" href="#Independence-sampler-on-a-path-space-1" title="Permalink"></a></h2><hr/><p>The next algorithm on our list of improvements is an independence sampler. By itself it doesn&#39;t strike as being particularly beneficial–at most it seems to afford a change of perspective–but it will become an important stepping stone to more efficient algorithms.</p><p>Independence sampler is a particular, simple type of Metropolis–Hastings algorithm. Samples are repeatedly generated <strong>independently</strong> (hence the name) according to some proposal density <span>$X^\circ\sim d\mathbb{Q}$</span> and each proposal draw is either accepted with probability</p><div>\[a(X,X^\circ):= 1∧\frac{
+    \frac{d\mathbb{P}}{d\mathbb{Q}}(X^\circ)
+}{
+    \frac{d\mathbb{P}}{d\mathbb{Q}}(X)
+}\]</div><p>or is otherwise rejected. In case of acceptance we set <span>$X←X^\circ$</span>, whereas otherwise, we simply reject <span>$X^\circ$</span> and leave <span>$X$</span> unchanged. The output of the algorithm is a chain of accepted <span>$X$</span>s, whose stationary distribution will be given by <span>$\mathbb{P}$</span>.</p><p>You can think of this Metropolis–Hastings algorithm as a stack of importance samplers that use computed weights</p><div>\[w(X)\propto\frac{d\mathbb{P}}{d\mathbb{Q}}(X)\]</div><p>to evaluate the acceptance probability for the accept/reject step. In Julia we can write:</p><pre><code class="language-julia">struct IndependenceSampler end
+
+function Base.rand(P::DD.DiffusionProcess, tt, x0, xT, num_iter, ::IndependenceSampler)
+    X = trajectory(tt, P).process
+    X° = deepcopy(X)
+    rand!(BrownianBridge(), X, x0, xT)
+    w = acc_prob(X, P, 0.0) # weight
+
+    num_accpt = 0
+    for i in 1:num_iter
+        # sample proposal
+        rand!(BrownianBridge(), X°, x0, xT)
+        # compute its weight
+        w° = acc_prob(X°, P, 0.0)
+
+        # Metropolis–Hastings step
+        if rand() &lt;= w°/w # note that l (no matter its value) cancels out
+            X, X° = X°, X
+            w = w°
+            num_accpt += 1
+        end
+    end
+    println(&quot;accpt rate: &quot;, num_accpt/num_iter)
+
+    return X
+end
+
+rand(P, tt, mode1, mode2, 1e4, IndependenceSampler())</code></pre><p>where we&#39;ve added some message about acceptance rate. It&#39;s a useful metric for practice.</p><p>Independence sampler does not address the issue of the computational issues that we had before as the proposals are still sampled blindly from the Wiener law. However, it takes us right to the front door of some algorithms that do.</p><h2 id="Metropolis–Hastings-algorithm-with-local-updates-1"><a class="docs-heading-anchor" href="#Metropolis–Hastings-algorithm-with-local-updates-1">Metropolis–Hastings algorithm with local updates</a><a class="docs-heading-anchor-permalink" href="#Metropolis–Hastings-algorithm-with-local-updates-1" title="Permalink"></a></h2><hr/><p>The power of the Metropolis–Hastings algorithm comes from the fact that we don&#39;t need to make independent updates and we may instead use local updates that exploit the fact that an already accepted path must have been somewhat good for it to be accepted. In particular, for the diffusion laws we can use a technique called preconditioned Crank–Nicolson scheme to–instead of sample diffusion paths independently from the Brownian bridge laws–perturb the already accepted paths locally. The mathematical details are beyond the scope of this tutorial (though they are not complicated and you might be able to figure them out from looking at the code below), but the preconditioned Crank–Nicolson scheme (with an additional step of non-centered parameterization) can be implemented as follows:</p><pre><code class="language-julia">function noncenter_and_crank_nicolson!(X°, X, ρ)
+    # &quot;non-centered parameterization&quot;
+    rev_x° = zero_out_Brownian_birdge!(X°)
+    rev_x = zero_out_Brownian_birdge!(X)
+
+    # local move
+    crank_nicolson!(X°.x, X.x, ρ)
+
+    # transform back to regular parameterization
+    rev_x°(X°)
+    rev_x(X)
+end
+
+# transforms x0-xT Brownian bridges to 0-0 Brownian bridges
+# and returns a transformation that can do the reverse
+function zero_out_Brownian_birdge!(X)
+    T, x0, xT = X.t[end], X.x[1], X.x[end]
+    λ(t, x) = ( x - x0 - (xT - x0)*t/T )
+    X.x .= λ.(X.t, X.x)
+    λ_rev(t, x) = ( x0 + x + (xT - x0) * t/T )
+    reversal!(x) = (x.x .= λ_rev.(x.t, x.x))
+    reversal!
+end
+
+# perturbs the path y locally in the direction given by y°, saves to y°
+function crank_nicolson!(y°, y, ρ)
+    λ = sqrt(1-ρ^2)
+    y° .= λ .* y° .+ ρ .* y
+end</code></pre><p>With this scheme we can run a Metropolis–Hastings algorithm with local updates of trajectories</p><pre><code class="language-julia">struct MetropolisHastings end
+
+function Base.rand(P::DD.DiffusionProcess, tt, x0, xT, num_iter, ::MetropolisHastings; ρ=0.0, save_every=100)
+    X = trajectory(tt, P).process
+    X° = deepcopy(X)
+    rand!(BrownianBridge(), X, x0, xT)
+    w = acc_prob(X, P, 0.0) # weight
+
+    paths = []
+    num_accpt = 0
+    for i in 1:num_iter
+        # sample proposal
+        rand!(BrownianBridge(), X°, x0, xT)
+        # but move it only a little by perturbing X
+        noncenter_and_crank_nicolson!(X°, X, ρ)
+        # compute its weight
+        w° = acc_prob(X°, P, 0.0)
+
+        # Metropolis–Hastings step
+        if rand() &lt;= w°/w # note that l (no matter its value) cancels
+            X, X° = X°, X
+            w = w°
+            num_accpt += 1
+        end
+
+        # save an accepted path once in a while
+        (i % save_every == 0) &amp;&amp; push!(paths, deepcopy(X))
+    end
+    println(&quot;acceptance rate: &quot;, num_accpt/num_iter)
+
+    return paths
+end</code></pre><p>Parameter <span>$ρ\in[0,1)$</span> is called a memory parameter of the preconditioned Crank–Nicolson scheme. It indicates how much the sampling of new trajectories relies on the previously accepted path (<span>$ρ=0$</span> indicating independence sampler and <span>$ρ=1$</span> a degenerate sampler that does not move at all, because it is bound to the previously accepted path forever).</p><p>On one hand, when we set <span>$ρ$</span> to higher values, then sampling becomes easier (acceptance rate increases), on the other hand we don&#39;t move much and we need to make many more steps. You might worry that in a haste of improving computational cost due to length of bridges by increasing <span>$ρ$</span> we might be falling from the frying pan into the fire and trade one source of computational burden for the exact amount of another. This however is not the case, as the cost due to length of bridges is exponential, whereas that due to <span>$ρ$</span> scales much better.</p><p>To see it for yourself, let&#39;s try to sample bridges over a much longer time span, say <span>$[0,20]$</span>. It would probably take years to sample a single bridge of this length (for our example) using rejection sampling on a path space. But it is possible with the Metropolis–Hastings algorithm with local moves on a path space.</p><pre><code class="language-julia">P = BivariateDoubleWell(θ...)
+
+tt = 0.0:0.01:20.0
+paths = rand(P, tt, mode1, mode2, 1e5, MetropolisHastings(), ρ=0.997, save_every=1000)
+
+p = plot(size=(800, 500), layout=(2,1), title=[&quot;X₁&quot; &quot;X₂&quot;])
+for i in eachindex(paths)
+    a = (i == length(paths))
+    plot!(p, paths[i], Val(:vs_time), alpha=[0.1+a 0.1+a], color=[&quot;steelblue&quot; &quot;steelblue&quot;], label=&quot;&quot;)
+end
+display(p)</code></pre><p><img src="../../assets/tutorials/cond_diff/metrop_hastings.png" alt="metrop_hastings"/></p><p>As you can see the bimodality is now much more pronounced. We can even observe it more strongly if we consider a harder problem of different parameterization for which modes have a greater separation.</p><pre><code class="language-julia">θ = (
+    ρ1 = 0.5,
+    ρ2 = 0.5,
+    μ1 = 4.0,
+    μ2 = 1.0
+)
+mode1 = @SVector [sqrt(θ.μ1)/θ.μ2, sqrt(θ.μ1)]
+mode2 = @SVector [-sqrt(θ.μ1)/θ.μ2,-sqrt(θ.μ1)]
+
+P = BivariateDoubleWell(θ...)
+
+tt = 0.0:0.01:20.0
+paths = rand(P, tt, mode1, mode2, 1e5, MetropolisHastings(), ρ=0.999, save_every=1000)
+
+p = plot(size=(800, 500), layout=(2,1), title=[&quot;X₁&quot; &quot;X₂&quot;])
+for i in eachindex(paths)
+    a = 0.9*(i == length(paths))
+    plot!(p, paths[i], Val(:vs_time), alpha=[0.1+a 0.1+a], color=[&quot;steelblue&quot; &quot;steelblue&quot;], label=&quot;&quot;)
+end
+display(p)</code></pre><p><img src="../../assets/tutorials/cond_diff/metrop_hastings_dist_modes.png" alt="metrop_hastings_dist_modes"/></p><p>However, before calling it a victory let&#39;s run the algorithm again and see what happens:</p><pre><code class="language-julia">paths = rand(P, tt, mode1, mode2, 1e5, MetropolisHastings(), ρ=0.999, save_every=1000)
+
+p = plot(size=(800, 500), layout=(2,1), title=[&quot;X₁&quot; &quot;X₂&quot;])
+for i in eachindex(paths)
+    a = 0.9*(i == length(paths))
+    plot!(p, paths[i], Val(:vs_time), alpha=[0.1+a 0.1+a], color=[&quot;steelblue&quot; &quot;steelblue&quot;], label=&quot;&quot;)
+end
+display(p)</code></pre><p><img src="../../assets/tutorials/cond_diff/metrop_hastings_dist_modes2.png" alt="metrop_hastings_dist_modes2"/></p><p>The paths look quite different! It appears that <span>$1e5$</span> is not enough steps to fully explore the stationary distribution for this example and a much greater number of steps will be needed. Diagnosing whether your chain has converged or not is part science, part experience, (and sometimes) part art.</p><h2 id="Concluding-remarks-1"><a class="docs-heading-anchor" href="#Concluding-remarks-1">Concluding remarks</a><a class="docs-heading-anchor-permalink" href="#Concluding-remarks-1" title="Permalink"></a></h2><hr/><p>TODO</p><div class="admonition is-success"><header class="admonition-header">Exercise</header><div class="admonition-body"><p>Modify rejection sampling on a path space for a bivariate double well potential with a diagonal volatility coefficient with diagonal entries <span>$σ_1$</span> and <span>$σ_2$</span>.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../in_place_vs_out_of_place/">« In-place vs out-of-place methods</a><a class="docs-footer-nextpage" href="../../predefined_processes/lotka_volterra/">Lotka-Volterra system »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 16 June 2020 00:15">Tuesday 16 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
