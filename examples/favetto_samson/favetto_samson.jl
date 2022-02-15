@@ -13,7 +13,7 @@
 end
 
 DiffusionDefinition.b(t, x, P::FavettoSamson) = @SVector [
-    P.α * P.dose(t) - (P.α +P.β)*x[1] + P.μ*x[2],
+    P.α * P.dose(t) - (P.λ +P.β)*x[1] + P.μ*x[2],
     P.λ*x[1] - P.μ*x[2]
 ]
 
