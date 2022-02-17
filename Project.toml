@@ -1,7 +1,7 @@
 name = "DiffusionDefinition"
 uuid = "c126fcb9-5a08-4fee-b75a-97eb446288b0"
 authors = ["Sebastiano Grazzi", "Frank van der Meulen", "Marcin Mider", "Moritz Schauer"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
